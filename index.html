@@ -1,385 +1,305 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:v-on="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Mapbox2Image</title>
-    <!-- LEAFLET CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin=""/>
-    <!-- LEAFLET JS -->
-    <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js" integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA==" crossorigin=""></script>
-    <!-- HTML2CANVAS -->
-    <script src="http://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-    <!-- GOOGLE FONTS -->
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700,900" rel="stylesheet">
-    <!-- VUEJS -->
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14"></script>
-    <!-- VUE-RESOURCE -->
-    <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
-    <!-- FILESAVER -->
-    <script src="https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js/src/FileSaver.js"></script>
-    <!-- LODASH -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
-    <style type="text/css">
-        body{
-            -webkit-font-smoothing : antialiased;
-            background-color: #eee;
-            font-family: 'Montserrat', sans-serif;
-        }
-        #render{
-            zoom: 0.1;
-        }
-        #frame{
-            pointer-events: none;
-            position:relative;
-            margin:auto;
-            background-color: transparent;
-            width: 5000px;
-            height: 7000px;
-        }
-        #map{
-            pointer-events: auto;
-            text-transform: uppercase;
-            font-family: 'Montserrat', sans-serif;
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            top: 0;
-        }
-        #realy-outer{
-            pointer-events: none;
-            margin:0;
-            position:relative;
-            height: 6400px;
-            border: 300px solid #fff;
-        }
-        #outer{
-            pointer-events: none;
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            top: 0;
-            border: 18px solid #000;
-        }
-        #central{
-            pointer-events: none;
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            top: 0;
-            border: 35px solid #fff;
-        }
-        #inner{
-            pointer-events: none;
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            top: 0;
-            border: 35px solid #000;
-        }
-        #text-box{
-            -webkit-font-smoothing : antialiased;
-            background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 50%,rgba(255,255,255,1) 100%);
-            bottom: 0;
-            left: 0;
-            right: 0;
-            position: absolute;
-            height: 1500px;
-            padding-top: 600px;
-            z-index: 1000;
-            text-align: center;
-        }
-        #city{
-            font-size: 430px;
-            font-weight: 700;
-            letter-spacing: 50px;
-            text-indent: 50px;
-        }
-        #country{
-            font-size: 200px;
-            font-weight: 400;
-            letter-spacing: 70px;
-            text-indent: 70px;
-            margin: 0 0 50px 0;
-        }
-        #coords{
-            font-size: 160px;
-            font-weight: 300;
-            text-indent: 12px;
-            letter-spacing: 12px;
-        }
-        .black-bar{
-            letter-spacing: 0;
-        }
-        #setting-bloc{
-            background-color: #fff;
-            position:fixed;
-            border: 2px solid #000;
-            border-radius: 3px;
-            margin: 20px;
-            padding: 20px;
-            width: 350px;
-            z-index: 999;
-        }
-        #setting-bloc h3{
-            text-align: center;
-            margin-top: 5px;
-        }
-        tr>td{
-            padding-bottom: 5px;
-        }
-        #download{
-            font-size: 12px;
-            font-weight: 700;
-            margin: 20px auto 0 auto;
-            border-radius: 5px;
-            background-color: white;
-            text-align: center;
-            border: 1px solid #000;
-            padding: 5px 30px;
-            width: 100px;
-            cursor: pointer;
-        }
-        #download:hover{
-            background-color: #eeeeee;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Generate beautiful high-resolution map posters with Mapbox styling. Create personalized city prints for wall art and decoration.">
+  <meta name="keywords" content="map poster, city print, mapbox, wall art, custom map">
+  <meta name="author" content="Mapbox2Image">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Map2Poster — Custom Map Poster Generator">
+  <meta property="og:description" content="Create stunning map posters. Free & Open Source.">
+  <meta property="og:type" content="website">
+  
+  <title>Map2Poster — Free Map Poster Generator</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@300;400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <!-- MapLibre GL JS -->
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  
+  <!-- html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
+  <!-- FileSaver -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  
+  <!-- Vue 3 -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+  <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-    <div id="main">
-        <div v-if="accessToken.length >= accessTokenMinChar" id="setting-bloc">
-            <H3>SETTINGS</H3>
-            <table>
-                <tr>
-                    <td colspan="2"><strong>SEARCH</strong></td>
-                </tr>
-                <tr>
-                    <td>City | Place :</td>
-                    <td><input v-model="searchInput" v-on:input="typingSearch = true;"></td>
-                </tr>
-                <tr>
-                    <td style="padding-bottom: 20px;"></td>
-                    <td style="padding-bottom: 20px; color: red"> {{ searchError }} </td>
-                </tr>
-                <tr>
-                    <td colspan="2"><strong>MAP LABELS</strong></td>
-                </tr>
-                <tr>
-                    <td>City :</td>
-                    <td><input v-model="city"></td>
-                </tr>
-                <tr>
-                    <td>Country :</td>
-                    <td><input v-model="country"></td>
-                </tr>
-                <tr>
-                    <td>Lat :</td>
-                    <td><input v-model="lat" v-on:change="updatePosition"></td>
-                </tr>
-                <tr>
-                    <td>Lng :</td>
-                    <td><input v-model="lng" v-on:change="updatePosition"></td>
-                </tr>
-                <tr>
-                    <td style="padding-bottom: 30px;">Zoom :</td>
-                    <td style="padding-bottom: 30px;"><input type="range" min="10" max="16" step="0.1" v-model="zoom" v-on:input="updatePosition"></td>
-                </tr>
-                <tr>
-                    <td style="color: #999" colspan="2"><strong>MAPBOX</strong></td>
-                </tr>
-                <tr>
-                    <td style="color: #999">User :</td>
-                    <td><input v-model="mapboxUser" v-on:keyup="initMap" style="color: #777"></td>
-                </tr>
-                <tr>
-                    <td style="color: #999">Style :</td>
-                    <td><input v-model="mapboxStyle" v-on:keyup="initMap" style="color: #777"></td>
-                </tr>
-                <tr>
-                    <td style="color: #999">Access Token :</td>
-                    <td><textarea row="4" cols="30" v-model="accessToken" v-on:change="initMap" style="color: #777"></textarea></td>
-                </tr>
-            </table>
-            <br />
-            <div id="download" v-on:click="downloadImage">DOWNLOAD</div> <br />
-        </div>
-        <div v-else id="setting-bloc">
-            <H3>SETTINGS</H3>
-            Mapbox Access Token :
-            <textarea row="4" cols="30" v-model="accessToken" v-on:change="initMap"></textarea>
-        </div>
-        <div id="render">
-            <div id="frame">
-                <div id="realy-outer">
-                    <div id="outer">
-                        <div id="central">
-                            <div id="inner">
-                                <div v-on:click="updateCoords" id="map">
-                                    <div id="text-box">
-                                        <div id="city">
-                                            {{ mainText }}
-                                        </div>
-                                        <div id="country">
-                                            <span class="black-bar b-left">─────&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>{{ countryFirstLetters }}<span class="black-bar">{{ countryLastLetter }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;─────</span>
-                                        </div>
-                                        <div id="coords">
-                                            {{ coords }}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <div id="app" class="app">
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" :class="{ active: isLoading }">
+      <div class="spinner"></div>
     </div>
-    <script>
-        new Vue({
-            el: '#main',
-            data: {
-                mymap: null,
-                city: null,
-                country: null,
-                lat: null,
-                lng: null,
-                coords: null,
-                zoom: null,
-                accessToken: '',
-                accessTokenMinChar: 61,
-                typingSearch: false,
-                searchInput: null,
-                searchError: null,
-                mapboxUser: 'wiwi56', //Default Mapbox user
-                mapboxStyle: 'cjp2gez5g23g12rqax6604y48', //Default Mapbox style
-                defaultPosition: {
-                    'city': 'Paris',
-                    'country': 'France',
-                    'lat': 48.8415,
-                    'lng': 2.34025,
-                    'zoom': 15
-                }
-            },
-            computed: {
-                countryFirstLetters: function() {
-                    if (this.country !== null) {
-                        return this.country.substring(0, this.country.length - 1);
-                    }
-                },
-                countryLastLetter: function() {
-                    if (this.country !== null) {
-                        return this.country.slice(-1);
-                    }
-                },
-                mainText: function() {
-                    if (this.accessToken.length < this.accessTokenMinChar) {
-                        this.country = null;
-                        this.coords = null;
-                        return 'Access Token Required';
-                    } else {
-                        return this.city;
-                    }
-                }
-            },
-            mounted() {
-            },
-            watch: {
-                searchInput: _.debounce(function () {
-                    this.searchNominatim();
-                }, 1000)
-            },
-            methods: {
-                convertDMS(lat, lng) {
-                    let LatCardinal = (lat > 0) ? "°N" : "°S";
-                    let LngCardinal = (lng > 0) ? "°E" : "°W";
+    
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+    
+    <!-- Sidebar -->
+    <aside class="sidebar" :class="{ open: isSidebarOpen }">
+      <!-- Mobile Handle -->
+      <div class="mobile-handle" @click="toggleSidebar">
+        <div class="mobile-handle-bar"></div>
+      </div>
+      
+      <div class="settings-panel">
+        <!-- Header -->
+        <header class="settings-header">
+          <h1 class="settings-title">Map2Poster</h1>
+          <button class="theme-toggle" @click="toggleTheme" :title="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
+            <svg v-if="theme === 'dark'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+        </header>
+        
+        <!-- Token Required Message -->
+        <!-- Map Settings (Vector) -->
+        <!-- Map Settings (Vector) - Removed -->
 
-                    return Number(lat.toFixed(4)) +  LatCardinal + " " + Number(lng.toFixed(4)) + LngCardinal;
-                },
-                updateCoords() {
-                    let lat = this.mymap.getCenter().lat;
-                    let lng = this.mymap.getCenter().lng;
-                    this.coords = this.convertDMS(lat, lng);
-                    this.lat = lat;
-                    this.lng = lng;
-                },
-                updatePosition() {
-                    this.mymap.setView([this.lat, this.lng], this.zoom);
-                },
-                initMap() {
-                    let self = this;
+        <!-- Search -->
+        <div class="form-section">
+          <p class="section-title">Search Location</p>
+          <div class="form-group">
+            <label class="form-label sr-only" for="search">Search city or place</label>
+            <input 
+              id="search"
+              v-model="searchQuery"
+              type="text"
+              class="form-input"
+              placeholder="Search city or place..."
+            >
+            <p v-if="searchError" class="form-error">{{ searchError }}</p>
+          </div>
+        </div>
+          
+          <!-- Labels -->
+          <div class="form-section">
+            <p class="section-title">Poster Labels</p>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="city">City</label>
+                <input id="city" v-model="city" type="text" class="form-input">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="country">Country</label>
+                <input id="country" v-model="country" type="text" class="form-input">
+              </div>
+            </div>
+            <div class="form-group" style="margin-top: 0.75rem;">
+              <label class="checkbox-label">
+                <input type="checkbox" v-model="showCoords" class="form-checkbox">
+                <span>Show coordinates</span>
+              </label>
+            </div>
+          </div>
+          <!-- Map Style removed as per request -->
+          
+          <!-- Coordinates -->
+          <div class="form-section">
+            <p class="section-title">Position</p>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="lat">Latitude</label>
+                <input id="lat" v-model.number="lat" type="number" step="0.0001" class="form-input" @change="updateMapPosition">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="lng">Longitude</label>
+                <input id="lng" v-model.number="lng" type="number" step="0.0001" class="form-input" @change="updateMapPosition">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="zoom">Zoom: {{ zoom }}</label>
+              <div class="range-container">
+                <input 
+                  id="zoom"
+                  v-model.number="zoom"
+                  type="range"
+                  min="10"
+                  max="18"
+                  step="0.5"
+                  class="form-range"
+                >
+              </div>
+            </div>
+          </div>
+          
+          <!-- Style -->
+          <div class="form-section">
+            <p class="section-title">Poster Style</p>
+            <div class="style-grid">
+              <button 
+                class="style-option" 
+                :class="{ active: posterStyle === 'classic' }"
+                @click="setPosterStyle('classic')"
+                data-name="Classic"
+              >
+                <div class="style-preview classic"></div>
+              </button>
+              <button 
+                class="style-option" 
+                :class="{ active: posterStyle === 'blueprint' }"
+                @click="setPosterStyle('blueprint')"
+                data-name="Blueprint"
+              >
+                <div class="style-preview blueprint"></div>
+              </button>
+              <button 
+                class="style-option" 
+                :class="{ active: posterStyle === 'vintage' }"
+                @click="setPosterStyle('vintage')"
+                data-name="Vintage"
+              >
+                <div class="style-preview vintage"></div>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Orientation -->
+          <div class="form-section">
+            <p class="section-title">Orientation</p>
+            <div class="orientation-toggle">
+              <button 
+                class="orientation-btn"
+                :class="{ active: orientation === 'portrait' }"
+                @click="setOrientation('portrait')"
+              >
+                <span class="orientation-icon"></span>
+                Portrait
+              </button>
+              <button 
+                class="orientation-btn"
+                :class="{ active: orientation === 'landscape' }"
+                @click="setOrientation('landscape')"
+              >
+                <span class="orientation-icon landscape"></span>
+                Landscape
+              </button>
+            </div>
+          </div>
+          
+          <!-- Colors -->
+          <div class="form-section">
+            <p class="section-title">Colors</p>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="borderColor">Border</label>
+                <div class="color-picker-container">
+                  <input id="borderColor" v-model="borderColor" type="color" class="color-picker">
+                  <input v-model="borderColor" type="text" class="form-input" style="flex: 1;">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="textColor">Text</label>
+                <div class="color-picker-container">
+                  <input id="textColor" v-model="textColor" type="color" class="color-picker">
+                  <input v-model="textColor" type="text" class="form-input" style="flex: 1;">
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="bgColor">Background</label>
+              <div class="color-picker-container">
+                <input id="bgColor" v-model="bgColor" type="color" class="color-picker">
+                <input v-model="bgColor" type="text" class="form-input" style="flex: 1;">
+              </div>
+            </div>
+          </div>
+          
 
-                    if (this.mymap) {
-                        this.mymap.stopLocate();
-                        this.mymap.remove();
-                    }
-                    if (this.accessToken.length >= this.accessTokenMinChar) {
-                        this.city = (this.city === null) ? this.defaultPosition.city : this.city;
-                        this.country = (this.country === null) ? this.defaultPosition.country : this.country;
-                        this.lat = (this.lat === null) ? this.defaultPosition.lat : this.lat;
-                        this.lng = (this.lng === null) ? this.defaultPosition.lng : this.lng;
-                        this.zoom = (this.zoom === null) ? this.defaultPosition.zoom : this.zoom;
-
-                        this.mymap = L.map('map', {
-                            zoomControl: false,
-                            attributionControl: false,
-                            renderer: L.svg(),
-                            scrollWheelZoom: false
-                        }).setView([this.lat, this.lng], this.zoom);
-                        let tileLayer = L.tileLayer('https://api.mapbox.com/styles/v1/' + self.mapboxUser + '/' + self.mapboxStyle + '/tiles/256/{z}/{x}/{y}?access_token=' + this.accessToken, {}).addTo(this.mymap);
-                        tileLayer.on('tileerror', function(error, tile) {
-                            self.country = null;
-                            self.coords = null;
-                            self.city = 'Bad Access Token';
-                        });
-
-                        this.updateCoords();
-                    }
-                },
-                searchNominatim() {
-                    this.$http.get('http://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=' + this.searchInput).then(response => {
-                        if (typeof response.body !== 'undefined' && response.body.length > 0) {
-                            let firstResult = response.body[0];
-                            let address = firstResult.address;
-
-                            this.country = address.country;
-                            this.city = address.city;
-                            this.lat = firstResult.lat;
-                            this.lng = firstResult.lon;
-                            this.searchError = null;
-
-                            this.updatePosition();
-                        }
-                    }, response => {
-                        if (response.status === 429) {
-                            this.searchError = 'Search error (Too much request)';
-                        } else {
-                            this.searchError = 'Search error';
-                        }
-                    });
-                },
-                downloadImage() {
-                    let cityDown = this.city;
-                    let countryDown = this.country;
-                    document.getElementById("map").style.zIndex = '-2000';
-                    html2canvas(document.querySelector("#frame"), {
-                        allowTaint: false,
-                        useCORS: true,
-                        async: false,
-                        imageTimeout: 10000,
-                    }).then(canvas => {
-                        canvas.toBlob(function(blob) {
-                            // Generate file download
-                            window.saveAs(blob, "mapbox2image-" + cityDown + "-" + countryDown + ".png");
-                        });
-                        document.getElementById("map").style.zIndex = '0';
-                    });
-                },
-            },
-        })
-    </script>
+          
+          <!-- Download Button -->
+          <button class="btn btn-primary btn-lg" @click="downloadPoster" :disabled="isLoading">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            {{ isLoading ? 'Generating...' : 'Download Poster' }}
+          </button>
+      </div>
+    </aside>
+    
+    <!-- Main Content: Poster Preview -->
+    <main class="main-content">
+      <div class="poster-container">
+        <div class="poster" :class="[
+          orientation === 'landscape' ? 'landscape' : '',
+          posterStyle !== 'classic' ? 'style-' + posterStyle : ''
+        ]">
+          <div class="poster-frame">
+            <!-- Drag Hint (shown on hover) -->
+            <div class="map-drag-hint">
+              <span>✥ Drag to reposition</span>
+            </div>
+            
+            <!-- Map Layer -->
+            <div id="map"></div>
+            
+            <!-- Text Overlay Layer -->
+            <div class="poster-text">
+              <!-- Portrait: Stacked layout -->
+              <template v-if="orientation === 'portrait'">
+                <div class="poster-city">{{ displayCity }}</div>
+                <div class="poster-country" v-if="displayCountry">
+                  <span class="poster-divider"></span>
+                  {{ displayCountry }}
+                  <span class="poster-divider"></span>
+                </div>
+                <div class="poster-coords" v-if="showCoords && displayCoords">{{ displayCoords }}</div>
+              </template>
+              
+              <!-- Landscape: Inline layout -->
+              <template v-else>
+                <div class="poster-title-line">
+                  <span class="poster-city-inline">{{ displayCity }}</span>
+                  <span class="poster-separator" v-if="displayCountry">—</span>
+                  <span class="poster-country-inline" v-if="displayCountry">{{ displayCountry }}</span>
+                </div>
+                <div class="poster-coords" v-if="showCoords && displayCoords">{{ displayCoords }}</div>
+              </template>
+            </div>
+            
+            <!-- Border Overlay Layer (on top) -->
+            <div class="poster-borders">
+              <div class="border-outer"></div>
+              <div class="border-line-outer"></div>
+              <div class="border-middle"></div>
+              <div class="border-line-inner"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <!-- App Logic -->
+  <script src="utils.js"></script>
+  <script src="map-styles.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

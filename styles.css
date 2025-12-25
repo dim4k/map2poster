@@ -1,0 +1,1019 @@
+/* ==========================================================================
+   Mapbox2Image — Modern Stylesheet
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   CSS Variables & Theme
+   -------------------------------------------------------------------------- */
+:root {
+  /* Colors */
+  --color-bg: #0f0f14;
+  --color-surface: rgba(255, 255, 255, 0.05);
+  --color-surface-hover: rgba(255, 255, 255, 0.08);
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-text: #ffffff;
+  --color-text-muted: rgba(255, 255, 255, 0.6);
+  --color-accent: #6366f1;
+  --color-accent-hover: #818cf8;
+  --color-success: #22c55e;
+  --color-error: #ef4444;
+
+  /* Poster Colors */
+  --poster-bg: #ffffff;
+  --poster-border: #000000;
+  --poster-text: #000000;
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Montserrat', var(--font-sans);
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  /* Glass Effect */
+  --glass-blur: 20px;
+  --glass-bg: rgba(20, 20, 30, 0.8);
+}
+
+/* Light Theme */
+[data-theme="light"] {
+  --color-bg: #f5f5f7;
+  --color-surface: rgba(255, 255, 255, 0.9);
+  --color-surface-hover: rgba(255, 255, 255, 1);
+  --color-border: rgba(0, 0, 0, 0.1);
+  --color-text: #1a1a1a;
+  --color-text-muted: rgba(0, 0, 0, 0.5);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+}
+
+/* --------------------------------------------------------------------------
+   Reset & Base
+   -------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+  line-height: 1.5;
+  transition: background-color var(--transition-base);
+}
+
+/* --------------------------------------------------------------------------
+   Layout
+   -------------------------------------------------------------------------- */
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 380px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  min-height: 100vh;
+}
+
+/* --------------------------------------------------------------------------
+   Settings Panel (Glassmorphism)
+   -------------------------------------------------------------------------- */
+.settings-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  height: 100%;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.theme-toggle:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-accent);
+}
+
+.theme-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* --------------------------------------------------------------------------
+   Form Elements
+   -------------------------------------------------------------------------- */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.form-input {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 0.9375rem;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.form-input:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.form-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.form-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.form-error {
+  font-size: 0.8125rem;
+  color: var(--color-error);
+  margin-top: var(--spacing-xs);
+}
+
+/* Range Slider */
+.range-container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.form-range {
+  flex: 1;
+  height: 6px;
+  background: var(--color-surface);
+  border-radius: var(--radius-full);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.form-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--color-accent);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+
+.form-range::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.range-value {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Color Picker */
+.color-picker-container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.color-picker {
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  overflow: hidden;
+  padding: 0;
+}
+
+.color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-picker::-webkit-color-swatch {
+  border: none;
+}
+
+/* Select/Dropdown */
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--spacing-sm) center;
+  padding-right: calc(var(--spacing-md) + 20px);
+}
+
+/* Checkbox */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  font-size: 0.9375rem;
+  color: var(--color-text);
+}
+
+.form-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   Buttons
+   -------------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--color-accent-hover);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-accent);
+}
+
+.btn-lg {
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: 1rem;
+  width: 100%;
+}
+
+.btn-icon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Poster Styles Selection
+   -------------------------------------------------------------------------- */
+.style-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.style-option {
+  aspect-ratio: 7/10;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  position: relative;
+  overflow: hidden;
+}
+
+.style-option:hover {
+  border-color: var(--color-accent);
+}
+
+.style-option.active {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+
+.style-option::after {
+  content: attr(data-name);
+  position: absolute;
+  bottom: 4px;
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Mini poster preview inside style option */
+.style-preview {
+  width: 75%;
+  height: 75%;
+  margin-bottom: 20px;
+  background: white;
+  border-radius: 2px;
+}
+
+.style-preview.classic {
+  border: 2px solid #000;
+}
+
+.style-preview.blueprint {
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: #294380; /* Blueprint Blue */
+}
+
+.style-preview.vintage {
+  border: 4px double #8b7355;
+  background: #f5f0e6;
+}
+
+/* --------------------------------------------------------------------------
+   Orientation Toggle
+   -------------------------------------------------------------------------- */
+.orientation-toggle {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.orientation-btn {
+  flex: 1;
+  padding: var(--spacing-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.orientation-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.orientation-btn.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: white;
+}
+
+.orientation-icon {
+  width: 16px;
+  height: 20px;
+  border: 2px solid currentColor;
+  border-radius: 2px;
+}
+
+.orientation-icon.landscape {
+  width: 20px;
+  height: 14px;
+}
+
+/* --------------------------------------------------------------------------
+   Poster Render
+   -------------------------------------------------------------------------- */
+.poster-container {
+  max-width: 100%;
+  max-height: calc(100vh - 4rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.poster {
+  --poster-scale: 0.15; /* Increased from 0.1 for larger preview */
+  --poster-width: 5000px;
+  --poster-height: 7000px;
+  --border-margin: 300px;
+  --border-thick: 18px;
+  --border-thin: 35px;
+  
+  width: calc(var(--poster-width) * var(--poster-scale));
+  height: calc(var(--poster-height) * var(--poster-scale));
+  background: var(--poster-bg);
+  border-radius: var(--radius-sm);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  position: relative;
+  transition: all var(--transition-slow);
+}
+
+.poster.landscape {
+  --poster-width: 7000px;
+  --poster-height: 5000px;
+}
+
+.poster-frame {
+  transform-origin: top left;
+  transform: scale(var(--poster-scale));
+  width: var(--poster-width);
+  height: var(--poster-height);
+  position: relative;
+  background: var(--poster-bg);
+}
+
+/* Map - Bottom Layer (z-index: 1) */
+#map {
+  position: absolute;
+  top: calc(var(--border-margin) + var(--border-thick) + var(--border-thin) + var(--border-thick));
+  left: calc(var(--border-margin) + var(--border-thick) + var(--border-thin) + var(--border-thick));
+  right: calc(var(--border-margin) + var(--border-thick) + var(--border-thin) + var(--border-thick));
+  bottom: calc(var(--border-margin) + var(--border-thick) + var(--border-thin) + var(--border-thick));
+  z-index: 1;
+  cursor: grab;
+}
+
+#map:active {
+  cursor: grabbing;
+}
+
+/* Drag hint overlay */
+.map-drag-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(10);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 15px 30px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  z-index: 15;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.poster:hover .map-drag-hint {
+  opacity: 1;
+}
+
+.poster:active .map-drag-hint {
+  opacity: 0;
+}
+
+/* Text Overlay - Middle Layer (z-index: 5) */
+.poster-text {
+  position: absolute;
+  bottom: var(--border-margin);
+  left: var(--border-margin);
+  right: var(--border-margin);
+  height: 1800px; /* Tall gradient area */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 250px; /* Increased to lift text onto the map */
+  background: linear-gradient(
+    to bottom, 
+    rgba(255, 255, 255, 0) 0%,
+    var(--poster-bg) 50%,
+    var(--poster-bg) 100%
+  );
+  text-align: center;
+  font-family: var(--font-display);
+  color: var(--poster-text);
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Portrait: Stacked layout (City / Country) */
+.poster-city {
+  font-size: 420px;
+  font-weight: 700;
+  letter-spacing: 45px;
+  text-indent: 45px;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: 30px;
+}
+
+.poster-country {
+  font-size: 190px;
+  font-weight: 400;
+  letter-spacing: 65px;
+  text-indent: 65px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 50px;
+}
+
+.poster-divider {
+  width: 200px;
+  height: 4px;
+  background: var(--poster-text);
+  flex-shrink: 0;
+}
+
+.poster-coords {
+  font-size: 120px;
+  font-weight: 300;
+  letter-spacing: 6px;
+  margin-top: 60px;
+}
+
+/* Landscape: Inline layout (City — Country) */
+.poster-title-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 50px;
+  flex-wrap: wrap;
+}
+
+.poster-city-inline {
+  font-size: 280px;
+  font-weight: 700;
+  letter-spacing: 30px;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.poster-separator {
+  font-size: 180px;
+  font-weight: 300;
+  opacity: 0.5;
+}
+
+.poster-country-inline {
+  font-size: 180px;
+  font-weight: 400;
+  letter-spacing: 40px;
+  text-transform: uppercase;
+}
+
+/* Landscape text container adjustments */
+.poster.landscape .poster-text {
+  height: 800px;
+  padding-top: 250px;
+}
+
+.poster.landscape .poster-coords {
+  font-size: 90px;
+  margin-top: 40px;
+}
+
+/* Borders Overlay - Top Layer (z-index: 10) */
+.poster-borders {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Outer white margin */
+.border-outer {
+  position: absolute;
+  inset: 0;
+  border: var(--border-margin) solid var(--poster-bg);
+  box-sizing: border-box;
+}
+
+/* Outer black line */
+.border-line-outer {
+  position: absolute;
+  top: var(--border-margin);
+  left: var(--border-margin);
+  right: var(--border-margin);
+  bottom: var(--border-margin);
+  border: var(--border-thick) solid var(--poster-border);
+  box-sizing: border-box;
+}
+
+/* Middle white gap */
+.border-middle {
+  position: absolute;
+  top: calc(var(--border-margin) + var(--border-thick));
+  left: calc(var(--border-margin) + var(--border-thick));
+  right: calc(var(--border-margin) + var(--border-thick));
+  bottom: calc(var(--border-margin) + var(--border-thick));
+  border: var(--border-thin) solid var(--poster-bg);
+  box-sizing: border-box;
+}
+
+/* Inner black line */
+.border-line-inner {
+  position: absolute;
+  top: calc(var(--border-margin) + var(--border-thick) + var(--border-thin));
+  left: calc(var(--border-margin) + var(--border-thick) + var(--border-thin));
+  right: calc(var(--border-margin) + var(--border-thick) + var(--border-thin));
+  bottom: calc(var(--border-margin) + var(--border-thick) + var(--border-thin));
+  border: var(--border-thick) solid var(--poster-border);
+  box-sizing: border-box;
+}
+
+/* --------------------------------------------------------------------------
+   Poster Style Variants
+   -------------------------------------------------------------------------- */
+
+/* BLUEPRINT Style - No inner border, subtle shadow */
+.poster.style-blueprint .border-middle,
+.poster.style-blueprint .border-line-inner {
+  display: none;
+}
+
+.poster.style-blueprint .border-line-outer {
+  border-width: 8px;
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.05);
+}
+
+.poster.style-blueprint .poster-text {
+  font-family: 'Space Mono', monospace; /* Technical font */
+  background: linear-gradient(
+    to bottom, 
+    rgba(255, 255, 255, 0) 0%,
+    var(--poster-bg) 30%,
+    var(--poster-bg) 100%
+  );
+}
+
+.poster.style-blueprint .poster-city {
+  font-weight: 700;
+  letter-spacing: 10px;
+  text-indent: 10px;
+}
+
+.poster.style-blueprint .poster-country {
+  font-weight: 400;
+  letter-spacing: 20px;
+}
+
+.poster.style-blueprint .poster-divider {
+  display: block;
+  width: 100px;
+  height: 2px;
+  margin-top: 10px;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+/* VINTAGE Style - Sepia tones, decorative frame */
+.poster.style-vintage {
+  --poster-bg: #f5f0e6;
+  --poster-border: #8b7355;
+  --poster-text: #5c4a3a;
+}
+
+.poster.style-vintage .border-line-outer {
+  border-width: 24px;
+  border-style: double;
+}
+
+.poster.style-vintage .border-middle {
+  border-color: #f5f0e6;
+  border-width: 25px;
+}
+
+.poster.style-vintage .border-line-inner {
+  border-width: 24px;
+  border-style: double;
+}
+
+.poster.style-vintage .poster-text {
+  background: linear-gradient(
+    to bottom, 
+    rgba(245, 240, 230, 0) 0%,
+    #f5f0e6 40%,
+    #f5f0e6 100%
+  );
+}
+
+.poster.style-vintage .poster-city {
+  font-weight: 900;
+  letter-spacing: 35px;
+  text-indent: 35px;
+}
+
+.poster.style-vintage .poster-country {
+  font-weight: 500;
+}
+
+.poster.style-vintage .poster-divider {
+  width: 150px;
+  height: 3px;
+  background: #8b7355;
+}
+
+.poster.style-vintage .poster-coords {
+  font-style: italic;
+}
+
+/* --------------------------------------------------------------------------
+   Loading States
+   -------------------------------------------------------------------------- */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-base);
+}
+
+.loading-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --------------------------------------------------------------------------
+   Toasts
+   -------------------------------------------------------------------------- */
+.toast-container {
+  position: fixed;
+  bottom: var(--spacing-lg);
+  right: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  z-index: 1001;
+}
+
+.toast {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: 0.875rem;
+  color: var(--color-text);
+  animation: slideIn var(--transition-base);
+}
+
+.toast.success {
+  border-color: var(--color-success);
+}
+
+.toast.error {
+  border-color: var(--color-error);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Mobile Responsive
+   -------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: auto;
+    max-height: 100vh;
+    transform: translateY(calc(100% - 60px));
+    transition: transform var(--transition-slow);
+    z-index: 200;
+    padding: 0;
+  }
+
+  .sidebar.open {
+    transform: translateY(0);
+  }
+
+  .mobile-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-md);
+    cursor: pointer;
+    background: var(--glass-bg);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .mobile-handle-bar {
+    width: 40px;
+    height: 4px;
+    background: var(--color-text-muted);
+    border-radius: var(--radius-full);
+  }
+
+  .settings-panel {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: var(--spacing-md);
+    padding-bottom: 80px;
+  }
+
+  .poster {
+    --poster-scale: 0.09;
+  }
+  
+  /* Fix: Landscape poster is too wide for mobile screens at 0.09 scale (7000px * 0.09 = 630px) */
+  .poster.landscape {
+    --poster-scale: 0.055;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .style-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .poster {
+    --poster-scale: 0.075;
+  }
+  
+  /* Fix: prevent overflow on small screens too */
+  .poster.landscape {
+    --poster-scale: 0.04;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Utilities
+   -------------------------------------------------------------------------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Hide Leaflet attribution */
+.leaflet-control-attribution {
+  display: none !important;
+}
