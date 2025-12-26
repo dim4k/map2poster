@@ -38,8 +38,8 @@ createApp({
     const country = ref('France');
     
     // Fonts
-    const cityFont = ref('Playfair Display, serif');
-    const countryFont = ref('Lora, serif');
+    const cityFont = ref('Montserrat, sans-serif');
+    const countryFont = ref('Montserrat, sans-serif');
     const coordsFont = ref('Inter, sans-serif');
 
     const fontOptions = [
@@ -264,21 +264,28 @@ createApp({
       const originalTransition = posterElement.style.transition;
       
       try {
-        // 1. Temporarily upscale the poster to full native resolution (e.g. 5000px)
-        // Disable transitions to make it instant
+        // 1. Temporarily upscale poster to FULL native resolution for A2 Print
+        // Native width is 5000px (~42cm @ 300DPI) -> Perfect for A2
         posterElement.style.transition = 'none';
         posterElement.style.setProperty('--poster-scale', '1');
         
-        // 2. Force Map Resize & Redraw at huge size
+        // HACK: Disable box-shadows during export for 'midnight' style
+        // html2canvas struggles with large shadows on huge canvases (renders solid blocks)
+        const isMidnight = posterStyle.value === 'midnight';
+        const borders = posterElement.querySelectorAll('.border-line-outer');
+        if (isMidnight) {
+             borders.forEach(el => el.style.boxShadow = 'none');
+        }
+        
+        // 2. Force Map Resize & Redraw to load high-res tiles
         if (mapInstance.value) {
             mapInstance.value.resize();
-            // Wait for map to settle (tiles load, etc)
-            // Ideally listen for 'idle' but timeout is safer against hanging
-            await new Promise(r => setTimeout(r, 1500)); 
+            // Wait for tiles to fetch (increased delay for huge map)
+            await new Promise(r => setTimeout(r, 2000)); 
             mapInstance.value.triggerRepaint();
         }
 
-        // 3. Capture with html2canvas
+        // 3. Capture with html2canvas (scale 1 of the upscaled element)
         const canvas = await html2canvas(posterElement, {
           scale: 1, 
           useCORS: true,
@@ -311,9 +318,12 @@ createApp({
             
             AppUtils.showToast('Poster downloaded successfully! (300 DPI)', 'success');
             
-            // Restore state (done in callback because safe)
+            // Restore state
             posterElement.style.setProperty('--poster-scale', originalScale);
             posterElement.style.transition = originalTransition;
+            if (isMidnight) {
+                 borders.forEach(el => el.style.boxShadow = '');
+            }
             if (mapInstance.value) mapInstance.value.resize();
             isLoading.value = false;
             
