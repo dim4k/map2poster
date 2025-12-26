@@ -1,0 +1,72 @@
+/* 
+   New Poster Styles 
+   Append this to styles.css or load it separately. 
+   Ideally, append to styles.css for simplicity.
+*/
+
+/* MIDNIGHT Style - Cyberpunk / Neon */
+.poster.style-midnight {
+  --poster-bg: #0a0a0f;
+  --poster-border: #00f3ff;
+  --poster-text: #00f3ff;
+}
+
+.poster.style-midnight .border-line-outer {
+  border-width: 4px;
+  box-shadow: 0 0 20px var(--poster-border);
+}
+
+.poster.style-midnight .border-line-inner {
+  border-width: 1px;
+  opacity: 0.5;
+}
+
+.poster.style-midnight .poster-text {
+  /* text-shadow: 0 0 10px var(--poster-text); */ /* Can be heavy, maybe optional */
+  background: linear-gradient(
+    to bottom, 
+    rgba(10, 10, 15, 0) 0%,
+    var(--poster-bg) 40%,
+    var(--poster-bg) 100%
+  );
+}
+
+/* SWISS Style - Bauhaus / International */
+.poster.style-swiss {
+  --poster-bg: #ffffff;
+  --poster-border: #000000;
+  --poster-text: #000000;
+}
+
+.poster.style-swiss .border-line-outer {
+  border-width: 40px; /* Very thick border */
+}
+
+.poster.style-swiss .border-line-inner {
+  display: none;
+}
+
+.poster.style-swiss .poster-city {
+  font-weight: 900;
+  letter-spacing: -2px; /* Tight tracking */
+  text-transform: uppercase;
+}
+
+/* BOTANICAL Style - Nature / Soft */
+.poster.style-botanical {
+  --poster-bg: #f1f3f0;
+  --poster-border: #3a5a40;
+  --poster-text: #3a5a40;
+}
+
+.poster.style-botanical .border-line-outer {
+  border-width: 3px;
+}
+
+.poster.style-botanical .border-line-inner {
+  border-width: 1px;
+  top: calc(var(--border-margin) + var(--border-thick) + 15px);
+  bottom: calc(var(--border-margin) + var(--border-thick) + 15px);
+  left: calc(var(--border-margin) + var(--border-thick) + 15px);
+  right: calc(var(--border-margin) + var(--border-thick) + 15px);
+}

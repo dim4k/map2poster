@@ -37,6 +37,21 @@ createApp({
     const city = ref('Paris');
     const country = ref('France');
     
+    // Fonts
+    const cityFont = ref('Playfair Display, serif');
+    const countryFont = ref('Lora, serif');
+    const coordsFont = ref('Inter, sans-serif');
+
+    const fontOptions = [
+      { name: 'Inter', value: 'Inter, sans-serif' },
+      { name: 'Montserrat', value: 'Montserrat, sans-serif' },
+      { name: 'Space Mono', value: 'Space Mono, monospace' },
+      { name: 'Playfair Display', value: 'Playfair Display, serif' },
+      { name: 'Lora', value: 'Lora, serif' },
+      { name: 'Oswald', value: 'Oswald, sans-serif' },
+      { name: 'Raleway', value: 'Raleway, sans-serif' }
+    ];
+    
     // UI State
     const isLoading = ref(false);
     const isSidebarOpen = ref(false);
@@ -114,9 +129,20 @@ createApp({
     
     function updateMapPosition() {
       if (!mapInstance.value) return;
+      
+      let safeLat = parseFloat(lat.value);
+      let safeLng = parseFloat(lng.value);
+      let safeZoom = parseFloat(zoom.value);
+      
+      // Handle comma decimals if string
+      if (typeof lat.value === 'string') safeLat = parseFloat(lat.value.replace(',', '.'));
+      if (typeof lng.value === 'string') safeLng = parseFloat(lng.value.replace(',', '.'));
+
+      if (isNaN(safeLat) || isNaN(safeLng) || isNaN(safeZoom)) return;
+
       mapInstance.value.jumpTo({
-          center: [lng.value, lat.value],
-          zoom: zoom.value
+          center: [safeLng, safeLat],
+          zoom: safeZoom
       });
     }
     
@@ -160,14 +186,55 @@ createApp({
           borderColor.value = '#000000';
           textColor.value = '#000000';
           bgColor.value = '#ffffff';
+          // Fonts (Original Defaults)
+          cityFont.value = 'Montserrat, sans-serif';
+          countryFont.value = 'Montserrat, sans-serif';
+          coordsFont.value = 'Inter, sans-serif';
+
       } else if (style === 'blueprint') {
           borderColor.value = '#294380';
           textColor.value = '#294380';
           bgColor.value = '#ffffff';
+           // Fonts
+          cityFont.value = 'Space Mono, monospace';
+          countryFont.value = 'Space Mono, monospace';
+          coordsFont.value = 'Space Mono, monospace';
+
       } else if (style === 'vintage') {
           borderColor.value = '#8b7355';
           textColor.value = '#5c4a3a';
           bgColor.value = '#e0d8c8';
+           // Fonts (Original Defaults)
+          cityFont.value = 'Montserrat, sans-serif';
+          countryFont.value = 'Montserrat, sans-serif';
+          coordsFont.value = 'Inter, sans-serif'; 
+      
+      } else if (style === 'midnight') {
+          borderColor.value = '#00f3ff';
+          textColor.value = '#00f3ff';
+          bgColor.value = '#0a0a0f';
+          
+          cityFont.value = 'Space Mono, monospace';
+          countryFont.value = 'Space Mono, monospace';
+          coordsFont.value = 'Space Mono, monospace';
+
+      } else if (style === 'swiss') {
+          borderColor.value = '#000000';
+          textColor.value = '#000000';
+          bgColor.value = '#ffffff';
+          
+          cityFont.value = 'Inter, sans-serif';
+          countryFont.value = 'Inter, sans-serif';
+          coordsFont.value = 'Inter, sans-serif';
+
+      } else if (style === 'botanical') {
+          borderColor.value = '#3a5a40';
+          textColor.value = '#3a5a40';
+          bgColor.value = '#f1f3f0';
+          
+          cityFont.value = 'Playfair Display, serif';
+          countryFont.value = 'Lora, serif';
+          coordsFont.value = 'Raleway, sans-serif';
       }
 
       updateMapStyle(); 
@@ -277,6 +344,9 @@ createApp({
       roadWidthScale,
       showBuildings,
       buildingColor,
+      
+      // Fonts
+      cityFont, countryFont, coordsFont, fontOptions,
       
       // Methods
       toggleTheme,

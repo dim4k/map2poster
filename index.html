@@ -20,7 +20,7 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@300;400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@300;400;700;900&family=Space+Mono:wght@400;700&family=Playfair+Display:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&family=Oswald:wght@400;700&family=Raleway:wght@300;400;700&display=swap" rel="stylesheet">
   
   <!-- MapLibre GL JS -->
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
@@ -36,6 +36,8 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="mini-select.css">
+  <link rel="stylesheet" href="poster-styles-extra.css">
 </head>
 
 <body>
@@ -98,24 +100,47 @@
           </div>
         </div>
           
-          <!-- Labels -->
           <div class="form-section">
             <p class="section-title">Poster Labels</p>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label" for="city">City</label>
+                <div class="label-row">
+                  <label class="form-label" for="city">City</label>
+                  <div class="font-picker-pill">
+                    <span class="font-icon-aa">Aa</span>
+                    <select v-model="cityFont" class="form-select form-select-mini">
+                      <option v-for="font in fontOptions" :value="font.value">{{ font.name }}</option>
+                    </select>
+                  </div>
+                </div>
                 <input id="city" v-model="city" type="text" class="form-input">
               </div>
               <div class="form-group">
-                <label class="form-label" for="country">Country</label>
+                <div class="label-row">
+                  <label class="form-label" for="country">Country</label>
+                  <div class="font-picker-pill">
+                    <span class="font-icon-aa">Aa</span>
+                    <select v-model="countryFont" class="form-select form-select-mini">
+                      <option v-for="font in fontOptions" :value="font.value">{{ font.name }}</option>
+                    </select>
+                  </div>
+                </div>
                 <input id="country" v-model="country" type="text" class="form-input">
               </div>
             </div>
             <div class="form-group" style="margin-top: 0.75rem;">
-              <label class="checkbox-label">
-                <input type="checkbox" v-model="showCoords" class="form-checkbox">
-                <span>Show coordinates</span>
-              </label>
+              <div class="label-row">
+                <label class="checkbox-label" style="width: auto;">
+                  <input type="checkbox" v-model="showCoords" class="form-checkbox">
+                  <span>Show coordinates</span>
+                </label>
+                <div v-if="showCoords" class="font-picker-pill">
+                  <span class="font-icon-aa">Aa</span>
+                  <select v-model="coordsFont" class="form-select form-select-mini">
+                    <option v-for="font in fontOptions" :value="font.value">{{ font.name }}</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
           <!-- Map Style removed as per request -->
@@ -176,6 +201,32 @@
                 data-name="Vintage"
               >
                 <div class="style-preview vintage"></div>
+              </button>
+              
+              <!-- Row 2 -->
+              <button 
+                class="style-option" 
+                :class="{ active: posterStyle === 'midnight' }"
+                @click="setPosterStyle('midnight')"
+                data-name="Midnight"
+              >
+                <div class="style-preview midnight" style="background: #0a0a0f; border: 1px solid #00f3ff;"></div>
+              </button>
+              <button 
+                class="style-option" 
+                :class="{ active: posterStyle === 'swiss' }"
+                @click="setPosterStyle('swiss')"
+                data-name="Swiss"
+              >
+                <div class="style-preview swiss" style="background: #fff; border: 6px solid #000;"></div>
+              </button>
+              <button 
+                class="style-option" 
+                :class="{ active: posterStyle === 'botanical' }"
+                @click="setPosterStyle('botanical')"
+                data-name="Botanical"
+              >
+                <div class="style-preview botanical" style="background: #f1f3f0; border: 2px solid #3a5a40;"></div>
               </button>
             </div>
           </div>
@@ -283,23 +334,23 @@
             <div class="poster-text">
               <!-- Portrait: Stacked layout -->
               <template v-if="orientation === 'portrait'">
-                <div class="poster-city">{{ displayCity }}</div>
-                <div class="poster-country" v-if="displayCountry">
+                <div class="poster-city" :style="{ fontFamily: cityFont }">{{ displayCity }}</div>
+                <div class="poster-country" v-if="displayCountry" :style="{ fontFamily: countryFont }">
                   <span class="poster-divider"></span>
                   {{ displayCountry }}
                   <span class="poster-divider"></span>
                 </div>
-                <div class="poster-coords" v-if="showCoords && displayCoords">{{ displayCoords }}</div>
+                <div class="poster-coords" v-if="showCoords && displayCoords" :style="{ fontFamily: coordsFont }">{{ displayCoords }}</div>
               </template>
               
               <!-- Landscape: Inline layout -->
               <template v-else>
                 <div class="poster-title-line">
-                  <span class="poster-city-inline">{{ displayCity }}</span>
+                  <span class="poster-city-inline" :style="{ fontFamily: cityFont }">{{ displayCity }}</span>
                   <span class="poster-separator" v-if="displayCountry">—</span>
-                  <span class="poster-country-inline" v-if="displayCountry">{{ displayCountry }}</span>
+                  <span class="poster-country-inline" v-if="displayCountry" :style="{ fontFamily: countryFont }">{{ displayCountry }}</span>
                 </div>
-                <div class="poster-coords" v-if="showCoords && displayCoords">{{ displayCoords }}</div>
+                <div class="poster-coords" v-if="showCoords && displayCoords" :style="{ fontFamily: coordsFont }">{{ displayCoords }}</div>
               </template>
             </div>
             
