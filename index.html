@@ -36,8 +36,6 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="mini-select.css">
-  <link rel="stylesheet" href="poster-styles-extra.css">
 </head>
 
 <body>
@@ -58,7 +56,7 @@
       </div>
       
       <div class="settings-panel">
-        <!-- Header -->
+        <!-- Header (Sticky) -->
         <header class="settings-header">
           <h1 class="settings-title">Map2Poster</h1>
           <button class="theme-toggle" @click="toggleTheme" :title="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
@@ -78,16 +76,10 @@
             </svg>
           </button>
         </header>
-        
-        <!-- Token Required Message -->
-        <!-- Map Settings (Vector) -->
-        <!-- Map Settings (Vector) - Removed -->
 
         <!-- Search -->
         <div class="form-section">
-          <p class="section-title">Search Location</p>
           <div class="form-group">
-            <label class="form-label sr-only" for="search">Search city or place</label>
             <input 
               id="search"
               v-model="searchQuery"
@@ -99,218 +91,303 @@
             <p v-if="searchError" class="form-error">{{ searchError }}</p>
           </div>
         </div>
-          
-          <div class="form-section">
-            <p class="section-title">Poster Labels</p>
-            <div class="form-row">
-              <div class="form-group">
-                <div class="label-row">
-                  <label class="form-label" for="city">City</label>
-                  <div class="font-picker-pill">
-                    <span class="font-icon-aa">Aa</span>
-                    <select v-model="cityFont" class="form-select form-select-mini">
-                      <option v-for="font in fontOptions" :value="font.value">{{ font.name }}</option>
-                    </select>
+
+        <!-- SETTINGS GROUPS -->
+        
+        <!-- 1. Style & Theme -->
+        <details class="settings-group" open>
+            <summary class="settings-summary">Poster Style</summary>
+            <div class="settings-content">
+                <div class="style-grid">
+                  <button 
+                    class="style-option" 
+                    :class="{ active: posterStyle === 'classic' }"
+                    @click="setPosterStyle('classic')"
+                    data-name="Classic"
+                  >
+                    <div class="style-preview classic"></div>
+                  </button>
+                  <button 
+                    class="style-option" 
+                    :class="{ active: posterStyle === 'blueprint' }"
+                    @click="setPosterStyle('blueprint')"
+                    data-name="Blueprint"
+                  >
+                    <div class="style-preview blueprint"></div>
+                  </button>
+                  <button 
+                    class="style-option" 
+                    :class="{ active: posterStyle === 'vintage' }"
+                    @click="setPosterStyle('vintage')"
+                    data-name="Vintage"
+                  >
+                    <div class="style-preview vintage"></div>
+                  </button>
+                  <button 
+                    class="style-option" 
+                    :class="{ active: posterStyle === 'midnight' }"
+                    @click="setPosterStyle('midnight')"
+                    data-name="Midnight"
+                  >
+                    <div class="style-preview midnight" style="background: #0a0a0f; border: 1px solid #00f3ff;"></div>
+                  </button>
+                  <button 
+                    class="style-option" 
+                    :class="{ active: posterStyle === 'swiss' }"
+                    @click="setPosterStyle('swiss')"
+                    data-name="Swiss"
+                  >
+                    <div class="style-preview swiss" style="background: #fff; border: 6px solid #000;"></div>
+                  </button>
+                  <button 
+                    class="style-option" 
+                    :class="{ active: posterStyle === 'botanical' }"
+                    @click="setPosterStyle('botanical')"
+                    data-name="Botanical"
+                  >
+                    <div class="style-preview botanical" style="background: #f1f3f0; border: 2px solid #3a5a40;"></div>
+                  </button>
+                </div>
+
+                <!-- Orientation -->
+                <div class="orientation-toggle">
+                  <button 
+                    class="orientation-btn"
+                    :class="{ active: orientation === 'portrait' }"
+                    @click="setOrientation('portrait')"
+                  >
+                    <span class="orientation-icon"></span>
+                    Portrait
+                  </button>
+                  <button 
+                    class="orientation-btn"
+                    :class="{ active: orientation === 'landscape' }"
+                    @click="setOrientation('landscape')"
+                  >
+                    <span class="orientation-icon landscape"></span>
+                    Landscape
+                  </button>
+                </div>
+            </div>
+        </details>
+
+        <!-- 2. Map Customization (NEW) -->
+        <details class="settings-group">
+            <summary class="settings-summary">Map Customization</summary>
+            <div class="settings-content">
+                
+                <!-- Road Control -->
+                <div class="form-group">
+                    <label class="form-label">Road Width</label>
+                    <div class="range-container">
+                        <input 
+                          type="range" v-model.number="roadWidthScale" 
+                          min="0.5" max="3" step="0.1" 
+                          class="form-range"
+                        >
+                        <span class="range-value">{{ roadWidthScale }}x</span>
+                    </div>
+                </div>
+
+                <!-- Buildings -->
+                <!-- Buildings -->
+                <div class="form-group">
+                  <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                      <label class="checkbox-label">
+                        <input type="checkbox" v-model="showBuildings" class="form-checkbox">
+                        <span>Show Buildings</span>
+                      </label>
+                      <div class="color-picker-container" style="flex: 0 0 auto;">
+                         <input v-model="buildingColor" type="color" class="color-picker">
+                      </div>
                   </div>
                 </div>
-                <input id="city" v-model="city" type="text" class="form-input">
-              </div>
-              <div class="form-group">
-                <div class="label-row">
-                  <label class="form-label" for="country">Country</label>
-                  <div class="font-picker-pill">
-                    <span class="font-icon-aa">Aa</span>
-                    <select v-model="countryFont" class="form-select form-select-mini">
-                      <option v-for="font in fontOptions" :value="font.value">{{ font.name }}</option>
-                    </select>
+
+                <!-- Custom Colors -->
+                <div class="section-title" style="margin-top: var(--spacing-sm);">Map Colors</div>
+                
+                <div class="form-row">
+                     <!-- Water -->
+                    <div class="form-group">
+                        <label class="form-label">Water</label>
+                        <div class="color-picker-container">
+                            <input v-model="customWaterColor" type="color" class="color-picker">
+                            <input v-model="customWaterColor" type="text" class="form-input" style="flex: 1;">
+                        </div>
+                    </div>
+                    <!-- Land / Background -->
+                     <div class="form-group">
+                        <label class="form-label">Land</label>
+                        <div class="color-picker-container">
+                            <input v-model="customLandColor" type="color" class="color-picker">
+                            <input v-model="customLandColor" type="text" class="form-input" style="flex: 1;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <!-- Roads -->
+                    <div class="form-group">
+                        <label class="form-label">Roads</label>
+                        <div class="color-picker-container">
+                            <input v-model="customRoadColor" type="color" class="color-picker">
+                            <input v-model="customRoadColor" type="text" class="form-input" style="flex: 1;">
+                        </div>
+                    </div>
+                    <!-- Parks -->
+                     <div class="form-group">
+                        <label class="form-label">Parks</label>
+                        <div class="color-picker-container">
+                            <input v-model="customParkColor" type="color" class="color-picker">
+                            <input v-model="customParkColor" type="text" class="form-input" style="flex: 1;">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Reset Button -->
+                <button class="btn btn-secondary btn-sm" @click="resetMapColors" style="justify-content: center; margin-top: 5px;">
+                    Reset to Theme Defaults
+                </button>
+
+            </div>
+        </details>
+
+        <!-- 3. Labels & Overlay -->
+        <details class="settings-group">
+            <summary class="settings-summary">Labels & Poster</summary>
+            <div class="settings-content">
+                
+                <div class="form-group">
+                    <label class="form-label">Border Style</label>
+                     <div class="font-picker-pill">
+                        <select v-model="borderStyle" class="form-select form-select-mini" style="width: 100%;">
+                          <option v-for="style in borderOptions" :value="style.value">{{ style.name }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="city">City</label>
+                    <input id="city" v-model="city" type="text" class="form-input">
+                    <!-- Font Select -->
+                    <div class="font-picker-pill" style="margin-top: 5px;">
+                        <select v-model="cityFont" class="form-select form-select-mini" style="width: 100%;">
+                          <option v-for="font in fontOptions" :value="font.value">{{ font.name }}</option>
+                        </select>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="country">Country</label>
+                    <input id="country" v-model="country" type="text" class="form-input">
+                     <!-- Font Select -->
+                     <div class="font-picker-pill" style="margin-top: 5px;">
+                        <select v-model="countryFont" class="form-select form-select-mini" style="width: 100%;">
+                          <option v-for="font in fontOptions" :value="font.value">{{ font.name }}</option>
+                        </select>
+                    </div>
                   </div>
                 </div>
-                <input id="country" v-model="country" type="text" class="form-input">
-              </div>
-            </div>
-            <div class="form-group" style="margin-top: 0.75rem;">
-              <div class="label-row">
-                <label class="checkbox-label" style="width: auto;">
-                  <input type="checkbox" v-model="showCoords" class="form-checkbox">
-                  <span>Show coordinates</span>
-                </label>
-                <div v-if="showCoords" class="font-picker-pill">
-                  <span class="font-icon-aa">Aa</span>
-                  <select v-model="coordsFont" class="form-select form-select-mini">
-                    <option v-for="font in fontOptions" :value="font.value">{{ font.name }}</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- Map Style removed as per request -->
-          
-          <!-- Coordinates -->
-          <div class="form-section">
-            <p class="section-title">Position</p>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="lat">Latitude</label>
-                <input id="lat" v-model.number="lat" type="number" step="0.0001" class="form-input" @change="updateMapPosition">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="lng">Longitude</label>
-                <input id="lng" v-model.number="lng" type="number" step="0.0001" class="form-input" @change="updateMapPosition">
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="zoom">Zoom: {{ zoom }}</label>
-              <div class="range-container">
-                <input 
-                  id="zoom"
-                  v-model.number="zoom"
-                  type="range"
-                  min="10"
-                  max="18"
-                  step="0.2"
-                  class="form-range"
-                >
-              </div>
-            </div>
-          </div>
-          
-          <!-- Style -->
-          <div class="form-section">
-            <p class="section-title">Poster Style</p>
-            <div class="style-grid">
-              <button 
-                class="style-option" 
-                :class="{ active: posterStyle === 'classic' }"
-                @click="setPosterStyle('classic')"
-                data-name="Classic"
-              >
-                <div class="style-preview classic"></div>
-              </button>
-              <button 
-                class="style-option" 
-                :class="{ active: posterStyle === 'blueprint' }"
-                @click="setPosterStyle('blueprint')"
-                data-name="Blueprint"
-              >
-                <div class="style-preview blueprint"></div>
-              </button>
-              <button 
-                class="style-option" 
-                :class="{ active: posterStyle === 'vintage' }"
-                @click="setPosterStyle('vintage')"
-                data-name="Vintage"
-              >
-                <div class="style-preview vintage"></div>
-              </button>
-              
-              <!-- Row 2 -->
-              <button 
-                class="style-option" 
-                :class="{ active: posterStyle === 'midnight' }"
-                @click="setPosterStyle('midnight')"
-                data-name="Midnight"
-              >
-                <div class="style-preview midnight" style="background: #0a0a0f; border: 1px solid #00f3ff;"></div>
-              </button>
-              <button 
-                class="style-option" 
-                :class="{ active: posterStyle === 'swiss' }"
-                @click="setPosterStyle('swiss')"
-                data-name="Swiss"
-              >
-                <div class="style-preview swiss" style="background: #fff; border: 6px solid #000;"></div>
-              </button>
-              <button 
-                class="style-option" 
-                :class="{ active: posterStyle === 'botanical' }"
-                @click="setPosterStyle('botanical')"
-                data-name="Botanical"
-              >
-                <div class="style-preview botanical" style="background: #f1f3f0; border: 2px solid #3a5a40;"></div>
-              </button>
-            </div>
-          </div>
-          
-          <!-- Orientation -->
-          <div class="form-section">
-            <p class="section-title">Orientation</p>
-            <div class="orientation-toggle">
-              <button 
-                class="orientation-btn"
-                :class="{ active: orientation === 'portrait' }"
-                @click="setOrientation('portrait')"
-              >
-                <span class="orientation-icon"></span>
-                Portrait
-              </button>
-              <button 
-                class="orientation-btn"
-                :class="{ active: orientation === 'landscape' }"
-                @click="setOrientation('landscape')"
-              >
-                <span class="orientation-icon landscape"></span>
-                Landscape
-              </button>
-            </div>
-          </div>
-          
-          <!-- Building Options -->
-          <div class="form-section">
-            <p class="section-title">Buildings</p>
-            <div class="form-group">
-              <label class="checkbox-label">
-                <input type="checkbox" v-model="showBuildings" class="form-checkbox">
-                <span>Show Buildings</span>
-              </label>
-            </div>
-            <div class="form-group" v-if="showBuildings">
-              <label class="form-label" for="buildingColor">Building Color</label>
-              <div class="color-picker-container">
-                <input id="buildingColor" v-model="buildingColor" type="color" class="color-picker">
-                <input v-model="buildingColor" type="text" class="form-input" style="flex: 1;">
-              </div>
-            </div>
-          </div>
 
-          <!-- Colors -->
-          <div class="form-section">
-            <p class="section-title">Colors</p>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="borderColor">Border</label>
-                <div class="color-picker-container">
-                  <input id="borderColor" v-model="borderColor" type="color" class="color-picker">
-                  <input v-model="borderColor" type="text" class="form-input" style="flex: 1;">
+                <!-- Text Overlay Control -->
+                <div class="form-group">
+                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                      <label class="checkbox-label">
+                        <input type="checkbox" v-model="showOverlay" class="form-checkbox">
+                        <span>Show Text Overlay / Fade</span>
+                      </label>
+                   </div>
+                   <!-- Overlay Height Slider -->
+                   <div class="range-container" v-if="showOverlay">
+                        <span class="range-value" style="min-width: 20px; font-size: 0.75rem;">Height</span>
+                        <input 
+                          type="range" v-model.number="overlayIntensity" 
+                          min="0" max="100" step="5" 
+                          class="form-range"
+                        >
+                        <span class="range-value">{{ overlayIntensity }}%</span>
+                    </div>
                 </div>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="textColor">Text</label>
-                <div class="color-picker-container">
-                  <input id="textColor" v-model="textColor" type="color" class="color-picker">
-                  <input v-model="textColor" type="text" class="form-input" style="flex: 1;">
-                </div>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="bgColor">Background</label>
-              <div class="color-picker-container">
-                <input id="bgColor" v-model="bgColor" type="color" class="color-picker">
-                <input v-model="bgColor" type="text" class="form-input" style="flex: 1;">
-              </div>
-            </div>
-          </div>
-          
 
-          
-          <!-- Download Button -->
-          <button class="btn btn-primary btn-lg" @click="downloadPoster" :disabled="isLoading">
+                <div class="form-group">
+                   <label class="checkbox-label">
+                      <input type="checkbox" v-model="showCoords" class="form-checkbox">
+                      <span>Show Coordinates</span>
+                    </label>
+                </div>
+                
+                <div class="section-title" style="margin-top: var(--spacing-sm);">Poster Colors</div>
+                
+                <div class="form-row">
+                    <!-- Frame Color -->
+                    <div class="form-group">
+                        <label class="form-label">Frame/Border</label>
+                        <div class="color-picker-container">
+                            <input v-model="borderColor" type="color" class="color-picker">
+                            <input v-model="borderColor" type="text" class="form-input" style="flex: 1;">
+                        </div>
+                    </div>
+
+                    <!-- Text Color -->
+                    <div class="form-group">
+                        <label class="form-label">Text</label>
+                        <div class="color-picker-container">
+                            <input v-model="textColor" type="color" class="color-picker">
+                            <input v-model="textColor" type="text" class="form-input" style="flex: 1;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Background Color -->
+                <div class="form-group">
+                    <label class="form-label">Poster Background</label>
+                    <div class="color-picker-container">
+                        <input v-model="bgColor" type="color" class="color-picker">
+                        <input v-model="bgColor" type="text" class="form-input" style="flex: 1;">
+                    </div>
+                </div>
+
+            </div>
+        </details>
+
+        <!-- 4. Location Details (Advanced) -->
+        <details class="settings-group">
+             <summary class="settings-summary">Position & Zoom</summary>
+             <div class="settings-content">
+                  <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label" for="lat">Lat</label>
+                        <input id="lat" v-model.number="lat" type="number" step="0.0001" class="form-input" @change="updateMapPosition">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="lng">Lng</label>
+                        <input id="lng" v-model.number="lng" type="number" step="0.0001" class="form-input" @change="updateMapPosition">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="zoom">Zoom: {{ zoom }}</label>
+                      <input 
+                          id="zoom"
+                          v-model.number="zoom"
+                          type="range"
+                          min="10"
+                          max="18"
+                          step="0.2"
+                          class="form-range"
+                        >
+                    </div>
+             </div>
+        </details>
+
+        <!-- Download Button -->
+        <button class="btn btn-primary btn-lg" @click="downloadPoster" :disabled="isLoading" style="margin-top: auto;">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
             </svg>
             {{ isLoading ? 'Generating...' : 'Download Poster' }}
-          </button>
+        </button>
       </div>
     </aside>
     
@@ -319,7 +396,8 @@
       <div class="poster-container">
         <div id="poster-render" class="poster" :class="[
           orientation === 'landscape' ? 'landscape' : '',
-          posterStyle !== 'classic' ? 'style-' + posterStyle : ''
+          posterStyle !== 'classic' ? 'style-' + posterStyle : '',
+          'border-' + borderStyle
         ]">
           <div class="poster-frame">
             <!-- Drag Hint (shown on hover) -->

@@ -53,8 +53,20 @@ window.MapStyles = {
         const style = map.getStyle();
         const layers = style.layers;
         
-        // Defaults if options not provided
-        const { showBuildings = true, buildingColor = null, backgroundColor = null } = options;
+        // Options with defaults
+        const { 
+            showBuildings = true, 
+            buildingColor = null, 
+            
+            // Custom Colors (Overrides)
+            waterColor = null,
+            roadColor = null,
+            parkColor = null,
+            backgroundColor = null,
+
+            // Road Scaling
+            roadWidthScale = 1
+        } = options;
 
         layers.forEach(layer => {
             const sourceLayer = layer['source-layer'] || '';
@@ -66,90 +78,116 @@ window.MapStyles = {
             }
 
             // 2. APPLY STYLES
+            // Pass all options to specific style handlers
+            const styleOps = { 
+                showBuildings, buildingColor, 
+                waterColor, roadColor, parkColor, backgroundColor, 
+                roadWidthScale 
+            };
+
             switch(styleName) {
-                case 'classic': this._applyClassic(map, layer, sourceLayer, showBuildings, buildingColor, backgroundColor); break;
-                case 'vintage': this._applyVintage(map, layer, sourceLayer, showBuildings, buildingColor, backgroundColor); break;
-                case 'blueprint': this._applyBlueprint(map, layer, sourceLayer, showBuildings, buildingColor, backgroundColor); break;
-                case 'midnight': this._applyMidnight(map, layer, sourceLayer, showBuildings, buildingColor, backgroundColor); break;
-                case 'swiss': this._applySwiss(map, layer, sourceLayer, showBuildings, buildingColor, backgroundColor); break;
-                case 'botanical': this._applyBotanical(map, layer, sourceLayer, showBuildings, buildingColor, backgroundColor); break;
+                case 'classic': this._applyClassic(map, layer, sourceLayer, styleOps); break;
+                case 'vintage': this._applyVintage(map, layer, sourceLayer, styleOps); break;
+                case 'blueprint': this._applyBlueprint(map, layer, sourceLayer, styleOps); break;
+                case 'midnight': this._applyMidnight(map, layer, sourceLayer, styleOps); break;
+                case 'swiss': this._applySwiss(map, layer, sourceLayer, styleOps); break;
+                case 'botanical': this._applyBotanical(map, layer, sourceLayer, styleOps); break;
             }
         });
         
         map.triggerRepaint();
     },
 
-    _applyClassic(map, layer, sourceLayer, showBuildings, buildingColor, backgroundColor) {
+    _applyClassic(map, layer, sourceLayer, ops) {
         const c = this.colors.classic;
-        if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', backgroundColor || c.background);
-        if (sourceLayer === 'water' && layer.type === 'fill') map.setPaintProperty(layer.id, 'fill-color', c.water);
-        this._handleBuildings(map, layer, sourceLayer, showBuildings, buildingColor || c.building);
+        if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', ops.backgroundColor || c.background);
+        if (sourceLayer === 'water' && layer.type === 'fill') map.setPaintProperty(layer.id, 'fill-color', ops.waterColor || c.water);
+        this._handleBuildings(map, layer, sourceLayer, ops.showBuildings, ops.buildingColor || c.building);
+        
         if ((sourceLayer === 'park' || sourceLayer === 'landuse' || sourceLayer === 'landcover') && layer.type === 'fill') {
-            map.setPaintProperty(layer.id, 'fill-color', c.park);
+            map.setPaintProperty(layer.id, 'fill-color', ops.parkColor || c.park);
             if (map.getPaintProperty(layer.id, 'fill-outline-color')) map.setPaintProperty(layer.id, 'fill-outline-color', 'rgba(0,0,0,0)');
         }
         if (sourceLayer === 'transportation' && layer.type === 'line') {
-            this._styleRoads(map, layer, c.roadMajor, true);
+            this._styleRoads(map, layer, ops.roadColor || c.roadMajor, true, ops.roadWidthScale);
         }
     },
 
-    _applyVintage(map, layer, sourceLayer, showBuildings, buildingColor, backgroundColor) {
+    _applyVintage(map, layer, sourceLayer, ops) {
         const c = this.colors.vintage;
-        if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', backgroundColor || c.background);
-        if (sourceLayer === 'water' && layer.type === 'fill') map.setPaintProperty(layer.id, 'fill-color', c.water);
-        this._handleBuildings(map, layer, sourceLayer, showBuildings, buildingColor || c.buildings, '#b0a090');
+        if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', ops.backgroundColor || c.background);
+        if (sourceLayer === 'water' && layer.type === 'fill') map.setPaintProperty(layer.id, 'fill-color', ops.waterColor || c.water);
+        this._handleBuildings(map, layer, sourceLayer, ops.showBuildings, ops.buildingColor || c.buildings, '#b0a090');
+        
         if ((sourceLayer === 'park' || sourceLayer === 'landuse' || sourceLayer === 'landcover') && layer.type === 'fill') {
-            map.setPaintProperty(layer.id, 'fill-color', c.parks);
+            map.setPaintProperty(layer.id, 'fill-color', ops.parkColor || c.parks);
             if (map.getPaintProperty(layer.id, 'fill-outline-color')) map.setPaintProperty(layer.id, 'fill-outline-color', 'rgba(0,0,0,0)');
         }
         if (sourceLayer === 'transportation' && layer.type === 'line') {
-            this._styleRoads(map, layer, c.roads, false);
+            this._styleRoads(map, layer, ops.roadColor || c.roads, false, ops.roadWidthScale);
         }
     },
 
-    _applyBlueprint(map, layer, sourceLayer, showBuildings, buildingColor, backgroundColor) {
+    _applyBlueprint(map, layer, sourceLayer, ops) {
         const c = this.colors.blueprint;
-        if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', backgroundColor || c.background);
-        if (sourceLayer === 'water' && layer.type === 'fill') map.setPaintProperty(layer.id, 'fill-color', c.water);
-        this._handleBuildings(map, layer, sourceLayer, showBuildings, buildingColor || '#e6eaf0');
-        if ((sourceLayer === 'park' || sourceLayer === 'landuse' || sourceLayer === 'landcover') && layer.type === 'fill') map.setLayoutProperty(layer.id, 'visibility', 'none');
+        if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', ops.backgroundColor || c.background);
+        if (sourceLayer === 'water' && layer.type === 'fill') map.setPaintProperty(layer.id, 'fill-color', ops.waterColor || c.water);
+        this._handleBuildings(map, layer, sourceLayer, ops.showBuildings, ops.buildingColor || '#e6eaf0');
+        
+        // Hide parks in blueprint usually, unless custom color set? Let's keep hiding by default but allow override if needed? 
+        // Logic: if parkColor is set, show it? No, keeping simple: blueprint hides parks.
+        if ((sourceLayer === 'park' || sourceLayer === 'landuse' || sourceLayer === 'landcover') && layer.type === 'fill') {
+             if (ops.parkColor) {
+                 map.setLayoutProperty(layer.id, 'visibility', 'visible');
+                 map.setPaintProperty(layer.id, 'fill-color', ops.parkColor);
+             } else {
+                 map.setLayoutProperty(layer.id, 'visibility', 'none');
+             }
+        }
+        
         if (sourceLayer === 'transportation' && layer.type === 'line') {
-            this._styleRoads(map, layer, c.roads, true);
+            this._styleRoads(map, layer, ops.roadColor || c.roads, true, ops.roadWidthScale);
         }
     },
 
-    _applyMidnight(map, layer, sourceLayer, showBuildings, buildingColor, backgroundColor) {
+    _applyMidnight(map, layer, sourceLayer, ops) {
         const c = this.colors.midnight;
-        if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', backgroundColor || c.background);
-        if (sourceLayer === 'water' && layer.type === 'fill') map.setPaintProperty(layer.id, 'fill-color', c.water);
-        this._handleBuildings(map, layer, sourceLayer, showBuildings, buildingColor || c.buildings);
+        if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', ops.backgroundColor || c.background);
+        if (sourceLayer === 'water' && layer.type === 'fill') map.setPaintProperty(layer.id, 'fill-color', ops.waterColor || c.water);
+        this._handleBuildings(map, layer, sourceLayer, ops.showBuildings, ops.buildingColor || c.buildings);
+        
         if ((sourceLayer === 'park' || sourceLayer === 'landuse' || sourceLayer === 'landcover') && layer.type === 'fill') {
-            map.setPaintProperty(layer.id, 'fill-color', '#1f2b3e');
+            map.setPaintProperty(layer.id, 'fill-color', ops.parkColor || '#1f2b3e');
         }
         if (sourceLayer === 'transportation' && layer.type === 'line') {
              if (layer.id.toLowerCase().includes('casing')) { map.setLayoutProperty(layer.id, 'visibility', 'none'); return; }
              
-             // High contrast neon roads: Motorway, Trunk, Primary, Secondary
-             // Using data-driven styling to catch all classes and apply hierarchy
+             // Use custom road color for major roads, minor roads default or derived?
+             // If ops.roadColor is set, use it for major. Keep minor dark?
+             const majorColor = ops.roadColor || c.roads;
+             
              map.setPaintProperty(layer.id, 'line-color', [
                  "match", ["get", "class"],
-                 ["motorway", "trunk", "primary", "secondary"], c.roads,
-                 c.roadsMinor
+                 ["motorway", "trunk", "primary", "secondary"], majorColor,
+                 c.roadsMinor // Keep minor roads subtle/dark unless we want to color them too?
              ]);
 
+             // Apply Scale
+             const scale = ops.roadWidthScale || 1;
+             
              map.setPaintProperty(layer.id, 'line-width', [
                  "interpolate", ["linear"], ["zoom"],
                  10, [
                      "match", ["get", "class"],
-                     ["motorway", "trunk"], 3,
-                     ["primary", "secondary"], 1.5,
-                     0.5
+                     ["motorway", "trunk"], 3 * scale,
+                     ["primary", "secondary"], 1.5 * scale,
+                     0.5 * scale
                  ],
                  14, [
                      "match", ["get", "class"],
-                     ["motorway", "trunk"], 5,
-                     ["primary", "secondary"], 3,
-                     0.8
+                     ["motorway", "trunk"], 5 * scale,
+                     ["primary", "secondary"], 3 * scale,
+                     0.8 * scale
                  ]
              ]);
              
@@ -157,46 +195,45 @@ window.MapStyles = {
         }
     },
 
-    _applySwiss(map, layer, sourceLayer, showBuildings, buildingColor, backgroundColor) {
+    _applySwiss(map, layer, sourceLayer, ops) {
         const c = this.colors.swiss;
-        if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', backgroundColor || c.background);
-        if (sourceLayer === 'water' && layer.type === 'fill') map.setPaintProperty(layer.id, 'fill-color', c.water);
-        this._handleBuildings(map, layer, sourceLayer, showBuildings, buildingColor || c.buildings);
+        if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', ops.backgroundColor || c.background);
+        if (sourceLayer === 'water' && layer.type === 'fill') map.setPaintProperty(layer.id, 'fill-color', ops.waterColor || c.water);
+        this._handleBuildings(map, layer, sourceLayer, ops.showBuildings, ops.buildingColor || c.buildings);
+        
         if ((sourceLayer === 'park' || sourceLayer === 'landuse' || sourceLayer === 'landcover') && layer.type === 'fill') {
-             map.setPaintProperty(layer.id, 'fill-color', '#f0f0f0');
+             map.setPaintProperty(layer.id, 'fill-color', ops.parkColor || '#f0f0f0');
         }
         if (sourceLayer === 'transportation' && layer.type === 'line') {
              if (layer.id.toLowerCase().includes('casing')) { map.setLayoutProperty(layer.id, 'visibility', 'none'); return; }
              
-             // Reset line-gap-width just in case
              if (map.getPaintProperty(layer.id, 'line-gap-width')) map.setPaintProperty(layer.id, 'line-gap-width', 0);
 
-             // Red major roads, black minor
              const isMajor = ["motorway", "trunk", "primary"].some(t => layer.id.includes(t));
-             map.setPaintProperty(layer.id, 'line-color', isMajor ? c.roads : c.roadsMinor);
+             map.setPaintProperty(layer.id, 'line-color', isMajor ? (ops.roadColor || c.roads) : c.roadsMinor);
              
-             // Use proper zoom interpolation to reset state from other styles
+             const scale = ops.roadWidthScale || 1;
+
              map.setPaintProperty(layer.id, 'line-width', [
                 "interpolate", ["linear"], ["zoom"],
-                10, isMajor ? 3 : 0.5,
-                14, isMajor ? 5 : 1
+                10, (isMajor ? 3 : 0.5) * scale,
+                14, (isMajor ? 5 : 1) * scale
              ]);
              map.setLayoutProperty(layer.id, 'visibility', 'visible');
         }
     },
 
-    _applyBotanical(map, layer, sourceLayer, showBuildings, buildingColor, backgroundColor) {
+    _applyBotanical(map, layer, sourceLayer, ops) {
         const c = this.colors.botanical;
-        if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', backgroundColor || c.background);
-        if (sourceLayer === 'water' && layer.type === 'fill') map.setPaintProperty(layer.id, 'fill-color', c.water);
-        this._handleBuildings(map, layer, sourceLayer, showBuildings, buildingColor || c.buildings);
+        if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', ops.backgroundColor || c.background);
+        if (sourceLayer === 'water' && layer.type === 'fill') map.setPaintProperty(layer.id, 'fill-color', ops.waterColor || c.water);
+        this._handleBuildings(map, layer, sourceLayer, ops.showBuildings, ops.buildingColor || c.buildings);
+        
         if ((sourceLayer === 'park' || sourceLayer === 'landuse' || sourceLayer === 'landcover') && layer.type === 'fill') {
-             map.setPaintProperty(layer.id, 'fill-color', c.parks);
+             map.setPaintProperty(layer.id, 'fill-color', ops.parkColor || c.parks);
         }
         if (sourceLayer === 'transportation' && layer.type === 'line') {
-             // Use standard road styling helper to ensure line-width and other props are reset
-             // "false" means don't fade minor roads, keep them visible but thinner (standard logic)
-             this._styleRoads(map, layer, c.roads, false);
+             this._styleRoads(map, layer, ops.roadColor || c.roads, false, ops.roadWidthScale);
         }
     },
 
@@ -213,7 +250,7 @@ window.MapStyles = {
         }
     },
 
-    _styleRoads(map, layer, color, fadeMinor = true) {
+    _styleRoads(map, layer, color, fadeMinor = true, scale = 1) {
         if (layer.id.toLowerCase().includes('casing')) {
             map.setLayoutProperty(layer.id, 'visibility', 'none');
             return;
@@ -221,11 +258,10 @@ window.MapStyles = {
         map.setPaintProperty(layer.id, 'line-color', color);
         if (map.getPaintProperty(layer.id, 'line-gap-width')) map.setPaintProperty(layer.id, 'line-gap-width', 0);
         
-        // Simplified width logic
         map.setPaintProperty(layer.id, 'line-width', [
             "interpolate", ["linear"], ["zoom"],
-            10, ["match", ["get", "class"], ["motorway", "trunk"], 3, ["primary", "secondary"], 1.5, fadeMinor ? 0.5 : 0],
-            14, ["match", ["get", "class"], ["motorway", "trunk"], 13, ["primary", "secondary"], 5, fadeMinor ? 1 : 0]
+            10, ["match", ["get", "class"], ["motorway", "trunk"], 3 * scale, ["primary", "secondary"], 1.5 * scale, fadeMinor ? 0.5 * scale : 0],
+            14, ["match", ["get", "class"], ["motorway", "trunk"], 13 * scale, ["primary", "secondary"], 5 * scale, fadeMinor ? 1 * scale : 0]
         ]);
         map.setPaintProperty(layer.id, 'line-opacity', 1);
         map.setLayoutProperty(layer.id, 'visibility', 'visible');

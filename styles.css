@@ -95,44 +95,80 @@ body {
   min-height: 100vh;
 }
 
+/* Mobile Handle (Hidden by default/desktop) */
+.mobile-handle {
+  display: none;
+}
+
 .sidebar {
   position: fixed;
   left: 0;
   top: 0;
   bottom: 0;
-  width: 500px;
+  width: 440px;
   z-index: 100;
+  padding: 0; 
+  overflow: hidden; /* Changed: Clip content to sidebar bounds */
+  transition: transform var(--transition-base);
+  background-color: var(--color-bg);
+  border-right: 1px solid var(--color-border);
+}
+
+.settings-panel {
+  position: absolute; /* Absolutely position within sidebar */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: scroll !important; /* Force scrollbar to always show */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  padding: var(--spacing-md);
+  
+  /* Visual Styles */
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   display: flex;
   flex-direction: column;
-  padding: var(--spacing-lg);
-  overflow-y: auto;
+  gap: var(--spacing-md);
+
+  /* Custom Scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.settings-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.settings-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.settings-panel::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+.settings-panel::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-muted);
 }
 
 .main-content {
   flex: 1;
-  margin-left: 500px;
+  margin-left: 440px; /* Matches sidebar width */
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--spacing-xl);
   min-height: 100vh;
+  transition: margin-left var(--transition-base);
 }
 
 /* --------------------------------------------------------------------------
    Settings Panel (Glassmorphism)
    -------------------------------------------------------------------------- */
-.settings-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-  min-height: max-content; /* Prevent clipping */
-}
+/* .settings-panel duplicate block removed */
 
 .settings-header {
   display: flex;
@@ -173,8 +209,55 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   Form Elements
+   Form Elements & Groups (Accordion)
    -------------------------------------------------------------------------- */
+   
+/* Details/Summary Styling for Accordions */
+details.settings-group {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    /* overflow: hidden removed - was clipping accordion content */
+    transition: all var(--transition-fast);
+}
+
+details.settings-group[open] {
+    border-color: var(--color-accent);
+}
+
+summary.settings-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--color-text);
+    list-style: none; /* Hide default triangle */
+}
+
+summary.settings-summary::-webkit-details-marker {
+    display: none;
+}
+
+summary.settings-summary::after {
+    content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    transition: transform var(--transition-fast);
+}
+
+details.settings-group[open] summary.settings-summary::after {
+    transform: rotate(180deg);
+}
+
+.settings-content {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
 .form-section {
   display: flex;
   flex-direction: column;
@@ -187,6 +270,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-muted);
+  margin-bottom: var(--spacing-xs);
 }
 
 .form-group {
@@ -225,11 +309,6 @@ body {
 
 .form-input::placeholder {
   color: var(--color-text-muted);
-}
-
-.form-textarea {
-  resize: vertical;
-  min-height: 80px;
 }
 
 .form-row {
@@ -298,6 +377,7 @@ body {
   cursor: pointer;
   overflow: hidden;
   padding: 0;
+  background: none;
 }
 
 .color-picker::-webkit-color-swatch-wrapper {
@@ -367,27 +447,10 @@ body {
   transform: translateY(0);
 }
 
-.btn-secondary {
-  background: var(--color-surface);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-}
-
-.btn-secondary:hover {
-  background: var(--color-surface-hover);
-  border-color: var(--color-accent);
-}
-
 .btn-lg {
   padding: var(--spacing-md) var(--spacing-xl);
   font-size: 1rem;
   width: 100%;
-}
-
-.btn-icon {
-  width: 40px;
-  height: 40px;
-  padding: 0;
 }
 
 /* --------------------------------------------------------------------------
@@ -517,7 +580,7 @@ body {
 }
 
 .poster {
-  --poster-scale: 0.15; /* Increased from 0.1 for larger preview */
+  --poster-scale: 0.15;
   --poster-width: 5000px;
   --poster-height: 7000px;
   --border-margin: 300px;
@@ -602,7 +665,7 @@ body {
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
-  padding-bottom: 250px; /* Increased to lift text onto the map */
+  padding-bottom: 250px;
   background: linear-gradient(
     to bottom, 
     rgba(255, 255, 255, 0) 0%,
@@ -616,7 +679,6 @@ body {
   pointer-events: none;
 }
 
-/* Portrait: Stacked layout (City / Country) */
 .poster-city {
   font-size: 420px;
   font-weight: 700;
@@ -653,7 +715,7 @@ body {
   margin-top: 60px;
 }
 
-/* Landscape: Inline layout (City — Country) */
+/* Landscape: Inline layout */
 .poster-title-line {
   display: flex;
   align-items: baseline;
@@ -683,7 +745,6 @@ body {
   text-transform: uppercase;
 }
 
-/* Landscape text container adjustments */
 .poster.landscape .poster-text {
   height: 800px;
   padding-top: 250px;
@@ -694,7 +755,7 @@ body {
   margin-top: 40px;
 }
 
-/* Borders Overlay - Top Layer (z-index: 10) */
+/* Borders Overlay */
 .poster-borders {
   position: absolute;
   inset: 0;
@@ -702,7 +763,6 @@ body {
   pointer-events: none;
 }
 
-/* Outer white margin */
 .border-outer {
   position: absolute;
   inset: 0;
@@ -710,7 +770,6 @@ body {
   box-sizing: border-box;
 }
 
-/* Outer black line */
 .border-line-outer {
   position: absolute;
   top: var(--border-margin);
@@ -721,7 +780,6 @@ body {
   box-sizing: border-box;
 }
 
-/* Middle white gap */
 .border-middle {
   position: absolute;
   top: calc(var(--border-margin) + var(--border-thick));
@@ -732,7 +790,6 @@ body {
   box-sizing: border-box;
 }
 
-/* Inner black line */
 .border-line-inner {
   position: absolute;
   top: calc(var(--border-margin) + var(--border-thick) + var(--border-thin));
@@ -746,20 +803,21 @@ body {
 /* --------------------------------------------------------------------------
    Poster Style Variants
    -------------------------------------------------------------------------- */
-
-/* BLUEPRINT Style - No inner border, subtle shadow */
-.poster.style-blueprint .border-middle,
-.poster.style-blueprint .border-line-inner {
+/* --------------------------------------------------------------------------
+   Poster Border Variants (Decoupled)
+   -------------------------------------------------------------------------- */
+.poster.border-blueprint .border-middle,
+.poster.border-blueprint .border-line-inner {
   display: none;
 }
 
-.poster.style-blueprint .border-line-outer {
+.poster.border-blueprint .border-line-outer {
   border-width: 8px;
   box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.05);
 }
 
 .poster.style-blueprint .poster-text {
-  font-family: 'Space Mono', monospace; /* Technical font */
+  font-family: 'Space Mono', monospace;
   background: linear-gradient(
     to bottom, 
     rgba(255, 255, 255, 0) 0%,
@@ -788,232 +846,386 @@ body {
   opacity: 0.5;
 }
 
-/* VINTAGE Style - Sepia tones, decorative frame */
-.poster.style-vintage {
-  --poster-bg: #f5f0e6;
-  --poster-border: #8b7355;
-  --poster-text: #5c4a3a;
-}
+/* VINTAGE Style */
+/* VINTAGE Style overrides removed (handled by JS defaults) */
 
-.poster.style-vintage .border-line-outer {
+.poster.border-vintage .border-line-outer {
   border-width: 24px;
   border-style: double;
-}
-
-.poster.style-vintage .border-middle {
-  border-color: #f5f0e6;
-  border-width: 25px;
-}
-
-.poster.style-vintage .border-line-inner {
-  border-width: 24px;
-  border-style: double;
-}
-
-.poster.style-vintage .poster-text {
-  background: linear-gradient(
-    to bottom, 
-    rgba(245, 240, 230, 0) 0%,
-    #f5f0e6 40%,
-    #f5f0e6 100%
-  );
-}
-
-.poster.style-vintage .poster-city {
-  font-weight: 900;
-  letter-spacing: 35px;
-  text-indent: 35px;
-}
-
-.poster.style-vintage .poster-country {
-  font-weight: 500;
-}
-
-.poster.style-vintage .poster-divider {
-  width: 150px;
-  height: 3px;
-  background: #8b7355;
-}
-
-.poster.style-vintage .poster-coords {
-  font-style: italic;
-}
-
-/* --------------------------------------------------------------------------
-   Loading States
-   -------------------------------------------------------------------------- */
-.loading-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--transition-base);
-}
-
-.loading-overlay.active {
-  opacity: 1;
-  pointer-events: all;
-}
-
-.spinner {
-  width: 48px;
-  height: 48px;
-  border: 3px solid var(--color-border);
-  border-top-color: var(--color-accent);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* --------------------------------------------------------------------------
-   Toasts
-   -------------------------------------------------------------------------- */
-.toast-container {
-  position: fixed;
-  bottom: var(--spacing-lg);
-  right: var(--spacing-lg);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  z-index: 1001;
-}
-
-.toast {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md) var(--spacing-lg);
-  font-size: 0.875rem;
-  color: var(--color-text);
-  animation: slideIn var(--transition-base);
-}
-
-.toast.success {
-  border-color: var(--color-success);
-}
-
-.toast.error {
-  border-color: var(--color-error);
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
 }
 
 /* --------------------------------------------------------------------------
    Mobile Responsive
    -------------------------------------------------------------------------- */
-@media (max-width: 900px) {
-  .sidebar {
+   
+/* Mobile Toggle Button */
+.mobile-handle {
+    display: none; /* Hidden on desktop */
     position: fixed;
-    inset: 0;
-    width: 100%;
-    height: auto;
-    max-height: 100vh;
-    transform: translateY(calc(100% - 60px));
-    transition: transform var(--transition-slow);
+    bottom: 2rem;
+    right: 2rem;
+    width: 56px;
+    height: 56px;
+    background: var(--color-accent);
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     z-index: 200;
-    padding: 0;
-  }
-
-  .sidebar.open {
-    transform: translateY(0);
-  }
-
-  .mobile-handle {
-    display: flex;
+    cursor: pointer;
     align-items: center;
     justify-content: center;
-    padding: var(--spacing-md);
-    cursor: pointer;
-    background: var(--glass-bg);
-    border-bottom: 1px solid var(--color-border);
-  }
+    transition: transform var(--transition-base);
+}
 
-  .mobile-handle-bar {
-    width: 40px;
-    height: 4px;
-    background: var(--color-text-muted);
-    border-radius: var(--radius-full);
-  }
+.mobile-handle-bar {
+    width: 24px;
+    height: 2px;
+    background: white;
+    position: relative;
+    transition: all var(--transition-fast);
+}
 
+.mobile-handle-bar::before,
+.mobile-handle-bar::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 2px;
+    background: white;
+    left: 0;
+    transition: all var(--transition-fast);
+}
+
+.mobile-handle-bar::before { top: -8px; }
+.mobile-handle-bar::after { bottom: -8px; }
+
+/* Active Menu Icon State */
+.sidebar.open .mobile-handle-bar {
+    background: transparent;
+}
+.sidebar.open .mobile-handle-bar::before {
+    transform: rotate(45deg);
+    top: 0;
+}
+.sidebar.open .mobile-handle-bar::after {
+    transform: rotate(-45deg);
+    bottom: 0;
+}
+
+
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 380px;
+  }
+  .main-content {
+    margin-left: 380px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 100%;
+    max-width: 100%;
+    padding: var(--spacing-lg);
+    background: var(--color-bg); /* Opaque background for mobile */
+    box-shadow: none;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .main-content {
+    margin-left: 0;
+    padding: var(--spacing-lg);
+  }
+  
+  .mobile-handle {
+    display: flex; /* Show FAB on mobile */
+  }
+  
+  /* Make settings panel span full height/width cleanly on mobile */
   .settings-panel {
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    max-height: calc(100vh - 60px);
-    overflow-y: auto;
+    border: none;
+    background: transparent;
+    backdrop-filter: none;
+    padding: 0;
+    padding-bottom: 80px; /* Space for FAB */
+  }
+
+  .poster {
+     /* Scale down poster preview for mobile - smaller to fit screen */
+     /* NOTE: No !important - allows JS to override for high-res download */
+     --poster-scale: 0.07; 
+  }
+  
+  /* Fix poster container - ensure it's centered and fits */
+  .poster-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 60vh;
+      padding: var(--spacing-lg);
+      box-sizing: border-box;
   }
 
   .main-content {
     margin-left: 0;
-    padding: var(--spacing-md);
-    padding-bottom: 80px;
-  }
-
-  .poster {
-    --poster-scale: 0.09;
-  }
-  
-  /* Fix: Landscape poster is too wide for mobile screens at 0.09 scale (7000px * 0.09 = 630px) */
-  .poster.landscape {
-    --poster-scale: 0.055;
+    padding: var(--spacing-md); /* More padding to prevent edge clipping */
+    overflow: hidden; /* Prevent horizontal scroll */
+    box-sizing: border-box;
   }
 }
 
-@media (max-width: 480px) {
-  .form-row {
-    grid-template-columns: 1fr;
-  }
+/* Font Picker Pill Style */
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xs);
+  gap: var(--spacing-sm);
+}
 
-  .style-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+.font-picker-pill {
+  display: flex;
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 2px 4px 2px 8px; /* Extra padding left for icon */
+  gap: 6px;
+  transition: all var(--transition-fast);
+  max-width: 140px; /* Prevent overflow */
+  min-width: 0; /* Flexbox safety */
+}
 
-  .poster {
-    --poster-scale: 0.075;
-  }
+.font-picker-pill:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-accent);
+}
+
+.font-icon-aa {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.form-select-mini {
+  font-size: 0.75rem;
+  padding: 2px 18px 2px 0; /* Right padding for chevron */
+  height: auto;
+  border: none;
+  background-color: transparent;
+  color: var(--color-text);
+  cursor: pointer;
   
-  /* Fix: prevent overflow on small screens too */
-  .poster.landscape {
-    --poster-scale: 0.04;
-  }
+  /* Custom Chevron */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-position: right 0 center;
+  background-repeat: no-repeat;
+  background-size: 10px;
+  
+  /* Overflow handling */
+  width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.form-select-mini:focus {
+  outline: none;
+}
+
+.form-select-mini option {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  padding: 4px;
+}
+/* 
+   New Poster Styles 
+   Append this to styles.css or load it separately. 
+   Ideally, append to styles.css for simplicity.
+*/
+
+/* MIDNIGHT Border - Cyberpunk / Neon */
+.poster.border-midnight .border-line-outer {
+  border-width: 4px;
+  box-shadow: 0 0 20px var(--poster-border);
+}
+
+.poster.border-midnight .border-line-inner {
+  border-width: 1px;
+  opacity: 0.5;
+}
+
+/* Make overlay gradient controllable */
+.poster-text {
+  --overlay-opacity: 1;
+  --overlay-height: 40%; 
+  background: linear-gradient(
+    to bottom, 
+    rgba(255, 255, 255, 0) 0%,
+    var(--poster-bg) calc(100% - var(--overlay-height)),
+    var(--poster-bg) 100%
+  );
+  opacity: var(--overlay-opacity);
+}
+
+.poster.style-midnight .poster-text {
+  /* Override gradient for midnight if needed, OR relies on global gradient logic above */
+  background: linear-gradient(
+    to bottom, 
+    rgba(10, 10, 15, 0) 0%,
+    var(--poster-bg) calc(100% - var(--overlay-height)),
+    var(--poster-bg) 100%
+  );
+}
+
+/* SWISS Border - Bauhaus / International */
+.poster.border-swiss .border-line-outer {
+  border-width: 40px; /* Very thick border */
+}
+
+.poster.border-swiss .border-line-inner {
+  display: none;
+}
+
+.poster.style-swiss .poster-city {
+  font-weight: 900;
+  letter-spacing: -2px; /* Tight tracking */
+  text-transform: uppercase;
+}
+
+/* BOTANICAL Border - Nature / Soft */
+.poster.border-botanical .border-line-outer {
+  border-width: 3px;
+}
+
+.poster.border-botanical .border-line-inner {
+  border-width: 1px;
+  top: calc(var(--border-margin) + var(--border-thick) + 15px);
+  bottom: calc(var(--border-margin) + var(--border-thick) + 15px);
+  left: calc(var(--border-margin) + var(--border-thick) + 15px);
+  right: calc(var(--border-margin) + var(--border-thick) + 15px);
 }
 
 /* --------------------------------------------------------------------------
-   Utilities
+   Mobile Responsive
    -------------------------------------------------------------------------- */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+@media (max-width: 768px) {
+  .app {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 85%;
+    max-width: 320px;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 5px 0 15px rgba(0, 0, 0, 0.3);
+    padding: 0;
+    border-right: none;
+    overflow: visible; /* Allow mobile handle to be visible */
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* Handle Button */
+  .mobile-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 20px;
+    right: -48px;
+    width: 48px;
+    height: 48px;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+    box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+  }
+
+  .mobile-handle-bar {
+    width: 24px;
+    height: 2px;
+    background-color: var(--color-text);
+    position: relative;
+    transition: all 0.2s;
+  }
+
+  .mobile-handle-bar::before,
+  .mobile-handle-bar::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 2px;
+    background-color: var(--color-text);
+    transition: all 0.2s;
+  }
+
+  .mobile-handle-bar::before { top: -8px; }
+  .mobile-handle-bar::after { top: 8px; }
+
+  /* Animate Handle when open */
+  .sidebar.open .mobile-handle-bar {
+    background-color: transparent;
+  }
+
+  .sidebar.open .mobile-handle-bar::before {
+    top: 0;
+    transform: rotate(45deg);
+  }
+
+  .sidebar.open .mobile-handle-bar::after {
+    top: 0;
+    transform: rotate(-45deg);
+  }
+  
+  /* Reset Main Content */
+  .main-content {
+      width: 100%;
+      height: 100vh;
+      margin-left: 0 !important; /* Force override */
+  }
+
+  /* Mobile Sidebar Padding */
+  .settings-panel {
+    padding: var(--spacing-md) var(--spacing-lg); /* More left/right padding */
+  }
+
+  /* Simplify Mobile UI */
+  .color-hex-input,
+  .form-input[type="text"][v-model*="Color"] {
+    display: none; /* Hide hex code inputs on mobile */
+  }
+
+  /* Smaller style previews on mobile */
+  .style-preview {
+    width: 70px;
+    height: 90px;
+  }
+
+  /* Compact form rows */
+  .form-row {
+    gap: var(--spacing-sm);
+  }
+
+  /* Hide coordinates checkbox on mobile (less essential) */
+  .form-group:has(input[v-model="showCoordinates"]) {
+    display: none;
+  }
 }
 
-.hidden {
-  display: none !important;
-}
-
-/* Hide Leaflet attribution */
-.leaflet-control-attribution {
-  display: none !important;
-}
