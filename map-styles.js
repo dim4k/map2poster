@@ -26,11 +26,14 @@ window.MapStyles = {
         }
     },
 
-    apply(map, styleName) {
+    apply(map, styleName, options = {}) {
         if (!map || !map.isStyleLoaded()) return;
 
         const style = map.getStyle();
         const layers = style.layers;
+        
+        // Defaults if options not provided
+        const { showBuildings = true, buildingColor = null } = options;
 
         layers.forEach(layer => {
             const sourceLayer = layer['source-layer'] || '';
@@ -43,18 +46,18 @@ window.MapStyles = {
 
             // 2. APPLY STYLES
             if (styleName === 'classic') {
-                this._applyClassic(map, layer, sourceLayer);
+                this._applyClassic(map, layer, sourceLayer, showBuildings, buildingColor);
             } else if (styleName === 'vintage') {
-                this._applyVintage(map, layer, sourceLayer);
+                this._applyVintage(map, layer, sourceLayer, showBuildings, buildingColor);
             } else if (styleName === 'blueprint') {
-                this._applyBlueprint(map, layer, sourceLayer);
+                this._applyBlueprint(map, layer, sourceLayer, showBuildings, buildingColor);
             }
         });
         
         map.triggerRepaint();
     },
 
-    _applyClassic(map, layer, sourceLayer) {
+    _applyClassic(map, layer, sourceLayer, showBuildings, buildingColor) {
         const c = this.colors.classic;
 
         // Background
@@ -63,7 +66,12 @@ window.MapStyles = {
         if (sourceLayer === 'water' && layer.type === 'fill') map.setPaintProperty(layer.id, 'fill-color', c.water);
         // Buildings
         if (sourceLayer === 'building' && layer.type === 'fill') {
-            map.setPaintProperty(layer.id, 'fill-color', c.building);
+            if (!showBuildings) {
+                map.setLayoutProperty(layer.id, 'visibility', 'none');
+            } else {
+                map.setLayoutProperty(layer.id, 'visibility', 'visible');
+                map.setPaintProperty(layer.id, 'fill-color', buildingColor || c.building);
+            }
             if (map.getPaintProperty(layer.id, 'fill-outline-color')) map.setPaintProperty(layer.id, 'fill-outline-color', 'rgba(0,0,0,0)');
         }
         // Parks
@@ -92,13 +100,18 @@ window.MapStyles = {
         }
     },
 
-    _applyVintage(map, layer, sourceLayer) {
+    _applyVintage(map, layer, sourceLayer, showBuildings, buildingColor) {
         const c = this.colors.vintage;
 
         if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', c.background);
         if (sourceLayer === 'water' && layer.type === 'fill') map.setPaintProperty(layer.id, 'fill-color', c.water);
         if (sourceLayer === 'building' && layer.type === 'fill') {
-            map.setPaintProperty(layer.id, 'fill-color', c.buildings);
+            if (!showBuildings) {
+                map.setLayoutProperty(layer.id, 'visibility', 'none');
+            } else {
+                map.setLayoutProperty(layer.id, 'visibility', 'visible');
+                map.setPaintProperty(layer.id, 'fill-color', buildingColor || c.buildings);
+            }
             if (map.getPaintProperty(layer.id, 'fill-outline-color')) map.setPaintProperty(layer.id, 'fill-outline-color', '#b0a090');
         }
         if ((sourceLayer === 'park' || sourceLayer === 'landuse' || sourceLayer === 'landcover') && layer.type === 'fill') {
@@ -126,13 +139,24 @@ window.MapStyles = {
         }
     },
 
-    _applyBlueprint(map, layer, sourceLayer) {
+    _applyBlueprint(map, layer, sourceLayer, showBuildings, buildingColor) {
         const c = this.colors.blueprint;
 
         if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', c.background);
         if (sourceLayer === 'water' && layer.type === 'fill') map.setPaintProperty(layer.id, 'fill-color', c.water);
-        // Hide buildings/parks
-        if (sourceLayer === 'building' && layer.type === 'fill') map.setLayoutProperty(layer.id, 'visibility', 'none');
+        
+        // Hide buildings/parks by default in blueprint unless forced
+        if (sourceLayer === 'building' && layer.type === 'fill') {
+            if (!showBuildings) {
+                map.setLayoutProperty(layer.id, 'visibility', 'none');
+            } else {
+                map.setLayoutProperty(layer.id, 'visibility', 'visible');
+                // For blueprint, default color might need to be defined if showing buildings
+                // Let's use a subtle blueish grey if no override provided, or just the override
+                map.setPaintProperty(layer.id, 'fill-color', buildingColor || '#e6eaf0'); 
+            }
+        }
+        
         if ((sourceLayer === 'park' || sourceLayer === 'landuse' || sourceLayer === 'landcover') && layer.type === 'fill') map.setLayoutProperty(layer.id, 'visibility', 'none');
         
         if (sourceLayer === 'transportation' && layer.type === 'line') {

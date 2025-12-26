@@ -22,6 +22,8 @@ createApp({
     // const showLabels = ref(false); // Removed
     const roadWidthScale = ref(1); 
     const mapStyle = ref('positron');
+    const showBuildings = ref(false);
+    const buildingColor = ref('#dcdcdc');
     
     // Poster customization
     const posterStyle = ref('classic');
@@ -104,7 +106,10 @@ createApp({
     
     function updateMapStyle() {
       if (!mapInstance.value || !mapInstance.value.isStyleLoaded()) return;
-      MapStyles.apply(mapInstance.value, posterStyle.value);
+      MapStyles.apply(mapInstance.value, posterStyle.value, {
+        showBuildings: showBuildings.value,
+        buildingColor: buildingColor.value
+      });
     }
     
     function updateMapPosition() {
@@ -254,6 +259,7 @@ createApp({
     
     watch(zoom, updateMapPosition);
     watch([borderColor, textColor, bgColor], applyColors);
+    watch([showBuildings, buildingColor], updateMapStyle);
 
     return {
       // State
@@ -269,6 +275,8 @@ createApp({
       // displayCountry, // Duplicate removed
       displayCoords,
       roadWidthScale,
+      showBuildings,
+      buildingColor,
       
       // Methods
       toggleTheme,

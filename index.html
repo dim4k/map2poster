@@ -203,6 +203,24 @@
             </div>
           </div>
           
+          <!-- Building Options -->
+          <div class="form-section">
+            <p class="section-title">Buildings</p>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" v-model="showBuildings" class="form-checkbox">
+                <span>Show Buildings</span>
+              </label>
+            </div>
+            <div class="form-group" v-if="showBuildings">
+              <label class="form-label" for="buildingColor">Building Color</label>
+              <div class="color-picker-container">
+                <input id="buildingColor" v-model="buildingColor" type="color" class="color-picker">
+                <input v-model="buildingColor" type="text" class="form-input" style="flex: 1;">
+              </div>
+            </div>
+          </div>
+
           <!-- Colors -->
           <div class="form-section">
             <p class="section-title">Colors</p>
