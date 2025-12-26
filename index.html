@@ -89,6 +89,7 @@
             <input 
               id="search"
               v-model="searchQuery"
+              @input="searchLocation"
               type="text"
               class="form-input"
               placeholder="Search city or place..."
@@ -141,7 +142,7 @@
                   type="range"
                   min="10"
                   max="18"
-                  step="0.5"
+                  step="0.2"
                   class="form-range"
                 >
               </div>
@@ -247,7 +248,7 @@
     <!-- Main Content: Poster Preview -->
     <main class="main-content">
       <div class="poster-container">
-        <div class="poster" :class="[
+        <div id="poster-render" class="poster" :class="[
           orientation === 'landscape' ? 'landscape' : '',
           posterStyle !== 'classic' ? 'style-' + posterStyle : ''
         ]">
