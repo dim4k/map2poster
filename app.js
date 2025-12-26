@@ -121,8 +121,6 @@ createApp({
           dragRotate: false
         });
         
-        mapInstance.value.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
-        
         mapInstance.value.on('load', () => {
           updateMapStyle();
         });
