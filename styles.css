@@ -666,12 +666,8 @@ details.settings-group[open] summary.settings-summary::after {
   justify-content: flex-end;
   align-items: center;
   padding-bottom: 250px;
-  background: linear-gradient(
-    to bottom, 
-    rgba(255, 255, 255, 0) 0%,
-    var(--poster-bg) 50%,
-    var(--poster-bg) 100%
-  );
+  /* Gradient is controlled via CSS variable --overlay-height, see below */
+  background: transparent;
   text-align: center;
   font-family: var(--font-display);
   color: var(--poster-text);
@@ -818,12 +814,6 @@ details.settings-group[open] summary.settings-summary::after {
 
 .poster.style-blueprint .poster-text {
   font-family: 'Space Mono', monospace;
-  background: linear-gradient(
-    to bottom, 
-    rgba(255, 255, 255, 0) 0%,
-    var(--poster-bg) 30%,
-    var(--poster-bg) 100%
-  );
 }
 
 .poster.style-blueprint .poster-city {
@@ -1060,28 +1050,8 @@ details.settings-group[open] summary.settings-summary::after {
   opacity: 0.5;
 }
 
-/* Make overlay gradient controllable */
-.poster-text {
-  --overlay-opacity: 1;
-  --overlay-height: 40%; 
-  background: linear-gradient(
-    to bottom, 
-    rgba(255, 255, 255, 0) 0%,
-    var(--poster-bg) calc(100% - var(--overlay-height)),
-    var(--poster-bg) 100%
-  );
-  opacity: var(--overlay-opacity);
-}
-
-.poster.style-midnight .poster-text {
-  /* Override gradient for midnight if needed, OR relies on global gradient logic above */
-  background: linear-gradient(
-    to bottom, 
-    rgba(10, 10, 15, 0) 0%,
-    var(--poster-bg) calc(100% - var(--overlay-height)),
-    var(--poster-bg) 100%
-  );
-}
+/* Gradient fade is controlled via inline JavaScript styles for html2canvas compatibility */
+/* See applyColors() in app.js */
 
 /* SWISS Border - Bauhaus / International */
 .poster.border-swiss .border-line-outer {

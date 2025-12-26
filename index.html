@@ -289,31 +289,54 @@
                   </div>
                 </div>
 
-                <!-- Text Overlay Control -->
+                <!-- Text Visibility Controls -->
+                <div class="section-title" style="margin-top: var(--spacing-xs);">Text Visibility</div>
+                
+                <div class="form-group" style="display: flex; flex-wrap: wrap; gap: var(--spacing-sm);">
+                   <label class="checkbox-label">
+                      <input type="checkbox" v-model="showCity" class="form-checkbox">
+                      <span>City</span>
+                   </label>
+                   <label class="checkbox-label">
+                      <input type="checkbox" v-model="showCountry" class="form-checkbox">
+                      <span>Country</span>
+                   </label>
+                   <label class="checkbox-label">
+                      <input type="checkbox" v-model="showCoords" class="form-checkbox">
+                      <span>Coordinates</span>
+                   </label>
+                </div>
+
+                <!-- Gradient Fade Control -->
                 <div class="form-group">
                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                       <label class="checkbox-label">
-                        <input type="checkbox" v-model="showOverlay" class="form-checkbox">
-                        <span>Show Text Overlay / Fade</span>
+                        <input type="checkbox" v-model="showFade" @change="applyColors" class="form-checkbox">
+                        <span>Show Gradient Fade</span>
                       </label>
                    </div>
-                   <!-- Overlay Height Slider -->
-                   <div class="range-container" v-if="showOverlay">
-                        <span class="range-value" style="min-width: 20px; font-size: 0.75rem;">Height</span>
+                   <!-- Fade Height Slider -->
+                   <div class="range-container" v-if="showFade">
+                        <span class="range-value" style="min-width: 50px; font-size: 0.75rem;">Fade</span>
                         <input 
-                          type="range" v-model.number="overlayIntensity" 
+                          type="range" v-model.number="fadeIntensity" 
+                          @input="applyColors"
                           min="0" max="100" step="5" 
                           class="form-range"
                         >
-                        <span class="range-value">{{ overlayIntensity }}%</span>
+                        <span class="range-value">{{ fadeIntensity }}%</span>
                     </div>
-                </div>
-
-                <div class="form-group">
-                   <label class="checkbox-label">
-                      <input type="checkbox" v-model="showCoords" class="form-checkbox">
-                      <span>Show Coordinates</span>
-                    </label>
+                   <!-- Solid Block Height Slider -->
+                   <div class="range-container" v-if="showFade">
+                        <span class="range-value" style="min-width: 50px; font-size: 0.75rem;">Solid</span>
+                        <input 
+                          type="range" v-model.number="solidBlockHeight" 
+                          @input="applyColors"
+                          min="0" max="50" step="5" 
+                          class="form-range"
+                        >
+                        <span class="range-value">{{ solidBlockHeight }}%</span>
+                    </div>
                 </div>
                 
                 <div class="section-title" style="margin-top: var(--spacing-sm);">Poster Colors</div>
@@ -412,8 +435,8 @@
             <div class="poster-text">
               <!-- Portrait: Stacked layout -->
               <template v-if="orientation === 'portrait'">
-                <div class="poster-city" :style="{ fontFamily: cityFont }">{{ displayCity }}</div>
-                <div class="poster-country" v-if="displayCountry" :style="{ fontFamily: countryFont }">
+                <div class="poster-city" v-if="showCity" :style="{ fontFamily: cityFont }">{{ displayCity }}</div>
+                <div class="poster-country" v-if="showCountry && displayCountry" :style="{ fontFamily: countryFont }">
                   <span class="poster-divider"></span>
                   {{ displayCountry }}
                   <span class="poster-divider"></span>
@@ -423,10 +446,10 @@
               
               <!-- Landscape: Inline layout -->
               <template v-else>
-                <div class="poster-title-line">
-                  <span class="poster-city-inline" :style="{ fontFamily: cityFont }">{{ displayCity }}</span>
-                  <span class="poster-separator" v-if="displayCountry">—</span>
-                  <span class="poster-country-inline" v-if="displayCountry" :style="{ fontFamily: countryFont }">{{ displayCountry }}</span>
+                <div class="poster-title-line" v-if="showCity || showCountry">
+                  <span class="poster-city-inline" v-if="showCity" :style="{ fontFamily: cityFont }">{{ displayCity }}</span>
+                  <span class="poster-separator" v-if="showCity && showCountry && displayCountry">—</span>
+                  <span class="poster-country-inline" v-if="showCountry && displayCountry" :style="{ fontFamily: countryFont }">{{ displayCountry }}</span>
                 </div>
                 <div class="poster-coords" v-if="showCoords && displayCoords" :style="{ fontFamily: coordsFont }">{{ displayCoords }}</div>
               </template>

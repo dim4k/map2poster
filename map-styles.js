@@ -111,6 +111,10 @@ window.MapStyles = {
         if (sourceLayer === 'transportation' && layer.type === 'line') {
             this._styleRoads(map, layer, ops.roadColor || c.roadMajor, true, ops.roadWidthScale);
         }
+        // Airport runways - dark grey for classic
+        if (sourceLayer === 'aeroway' && (layer.type === 'fill' || layer.type === 'line')) {
+            map.setPaintProperty(layer.id, layer.type === 'fill' ? 'fill-color' : 'line-color', '#555555');
+        }
     },
 
     _applyVintage(map, layer, sourceLayer, ops) {
@@ -125,6 +129,10 @@ window.MapStyles = {
         }
         if (sourceLayer === 'transportation' && layer.type === 'line') {
             this._styleRoads(map, layer, ops.roadColor || c.roads, false, ops.roadWidthScale);
+        }
+        // Airport runways - brown/sepia for vintage
+        if (sourceLayer === 'aeroway' && (layer.type === 'fill' || layer.type === 'line')) {
+            map.setPaintProperty(layer.id, layer.type === 'fill' ? 'fill-color' : 'line-color', '#6b5b4a');
         }
     },
 
@@ -147,6 +155,10 @@ window.MapStyles = {
         
         if (sourceLayer === 'transportation' && layer.type === 'line') {
             this._styleRoads(map, layer, ops.roadColor || c.roads, true, ops.roadWidthScale);
+        }
+        // Airport runways - cobalt blue for blueprint
+        if (sourceLayer === 'aeroway' && (layer.type === 'fill' || layer.type === 'line')) {
+            map.setPaintProperty(layer.id, layer.type === 'fill' ? 'fill-color' : 'line-color', '#4a6494');
         }
     },
 
@@ -193,6 +205,10 @@ window.MapStyles = {
              
              map.setLayoutProperty(layer.id, 'visibility', 'visible');
         }
+        // Airport runways - dark blue-grey for midnight
+        if (sourceLayer === 'aeroway' && (layer.type === 'fill' || layer.type === 'line')) {
+            map.setPaintProperty(layer.id, layer.type === 'fill' ? 'fill-color' : 'line-color', '#1e2d42');
+        }
     },
 
     _applySwiss(map, layer, sourceLayer, ops) {
@@ -221,6 +237,10 @@ window.MapStyles = {
              ]);
              map.setLayoutProperty(layer.id, 'visibility', 'visible');
         }
+        // Airport runways - light grey for swiss
+        if (sourceLayer === 'aeroway' && (layer.type === 'fill' || layer.type === 'line')) {
+            map.setPaintProperty(layer.id, layer.type === 'fill' ? 'fill-color' : 'line-color', '#cccccc');
+        }
     },
 
     _applyBotanical(map, layer, sourceLayer, ops) {
@@ -234,6 +254,10 @@ window.MapStyles = {
         }
         if (sourceLayer === 'transportation' && layer.type === 'line') {
              this._styleRoads(map, layer, ops.roadColor || c.roads, false, ops.roadWidthScale);
+        }
+        // Airport runways - olive for botanical
+        if (sourceLayer === 'aeroway' && (layer.type === 'fill' || layer.type === 'line')) {
+            map.setPaintProperty(layer.id, layer.type === 'fill' ? 'fill-color' : 'line-color', '#7a8a70');
         }
     },
 

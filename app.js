@@ -36,10 +36,13 @@ createApp({
     
     const orientation = ref('portrait');
     const showCoords = ref(true);
+    const showCity = ref(true);
+    const showCountry = ref(true);
     
-    // Overlay / Fade
-    const showOverlay = ref(true);
-    const overlayIntensity = ref(40); // % height
+    // Gradient Fade (only controls the gradient, not text visibility)
+    const showFade = ref(true);
+    const fadeIntensity = ref(50); // % height
+    const solidBlockHeight = ref(20); // % of solid color block below gradient
     
     const borderColor = ref('#000000');
     const textColor = ref('#000000');
@@ -236,7 +239,7 @@ createApp({
           showBuildings.value = false;
           buildingColor.value = '#dcdcdc';
           
-          overlayIntensity.value = 50;
+          fadeIntensity.value = 50;
 
       } else if (style === 'blueprint') {
           borderColor.value = '#294380';
@@ -249,7 +252,7 @@ createApp({
           showBuildings.value = false; // Hide by default
           buildingColor.value = '#e6eaf0';
           
-          overlayIntensity.value = 30;
+          fadeIntensity.value = 50;
 
       } else if (style === 'vintage') {
           borderColor.value = '#8b7355';
@@ -262,7 +265,7 @@ createApp({
           showBuildings.value = false;
           buildingColor.value = '#d4c5b0';
           
-          overlayIntensity.value = 60;
+          fadeIntensity.value = 50;
       
       } else if (style === 'midnight') {
           borderColor.value = '#00f3ff';
@@ -276,7 +279,7 @@ createApp({
           showBuildings.value = true;
           buildingColor.value = '#fdf6e3'; // Warm light color
           
-          overlayIntensity.value = 40;
+          fadeIntensity.value = 50;
 
       } else if (style === 'swiss') {
           borderColor.value = '#000000';
@@ -289,7 +292,7 @@ createApp({
           showBuildings.value = false;
           buildingColor.value = '#dcdcdc';
           
-          overlayIntensity.value = 0; // Usually no fade
+          fadeIntensity.value = 50;
 
       } else if (style === 'botanical') {
           borderColor.value = '#3a5a40';
@@ -302,7 +305,7 @@ createApp({
           showBuildings.value = false;
           buildingColor.value = '#ddbea9';
           
-          overlayIntensity.value = 40;
+          fadeIntensity.value = 50;
       }
 
       // Sync Map Customization Colors
@@ -442,11 +445,59 @@ createApp({
              borders.forEach(el => el.style.boxShadow = 'none');
         }
         
+        // HACK: Apply gradient as inline style for html2canvas compatibility
+        // Use bgColor with alpha 0 instead of 'transparent' to fix color interpolation
+        // 'transparent' is rgba(0,0,0,0) which interpolates to gray when fading to white
+        const posterTextEl = posterElement.querySelector('.poster-text');
+        const originalPosterTextStyle = posterTextEl?.getAttribute('style') || '';
+        if (posterTextEl && showFade.value) {
+            const sliderValue = fadeIntensity.value; // 0-100
+            const bg = bgColor.value;
+            const solidBlock = solidBlockHeight.value;
+            
+            // Convert hex to rgba with 0 alpha for proper interpolation
+            const hexToRgba = (hex, alpha) => {
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            };
+            const bgTransparent = hexToRgba(bg, 0);
+            const bgSolid = hexToRgba(bg, 1);
+            
+            const baseHeight = 1800;
+            let elementHeight, gradientStart;
+            
+            if (sliderValue <= 50) {
+                elementHeight = baseHeight;
+                gradientStart = 100 - (sliderValue * 2);
+            } else {
+                const extraHeight = ((sliderValue - 50) / 50) * baseHeight;
+                elementHeight = baseHeight + extraHeight;
+                gradientStart = 0;
+            }
+            
+            // Solid block at bottom
+            const fadeEnd = 100 - solidBlock;
+            
+            posterTextEl.style.setProperty('height', `${elementHeight}px`, 'important');
+            posterTextEl.style.setProperty('background', `linear-gradient(to bottom, ${bgTransparent} ${gradientStart}%, ${bgSolid} ${fadeEnd}%, ${bgSolid} 100%)`, 'important');
+        } else if (posterTextEl) {
+            posterTextEl.style.setProperty('background', 'transparent', 'important');
+            posterTextEl.style.setProperty('height', '1800px', 'important');
+        }
+        
         // 2. Force Map Resize & Redraw to load high-res tiles
+        // Using a longer delay to avoid rate-limiting from tile servers
         if (mapInstance.value) {
             mapInstance.value.resize();
-            // Wait for tiles to fetch (increased delay for huge map)
-            await new Promise(r => setTimeout(r, 2000)); 
+            
+            // First wait - let initial tiles start loading
+            await new Promise(r => setTimeout(r, 1500));
+            mapInstance.value.triggerRepaint();
+            
+            // Second wait - let remaining tiles complete
+            await new Promise(r => setTimeout(r, 2500));
             mapInstance.value.triggerRepaint();
         }
 
@@ -455,11 +506,13 @@ createApp({
         posterElement.style.webkitFontSmoothing = 'none';
         
         // 3. Capture with html2canvas
+        // IMPORTANT: Use poster background color to fix gradient transparency issue
+        // If backgroundColor is null, transparent gradient parts show through to black
         const canvas = await html2canvas(posterElement, {
           scale: 1, 
           useCORS: true,
           allowTaint: true,
-          backgroundColor: null,
+          backgroundColor: bgColor.value, // Use poster bg color instead of null
           logging: false,
           width: posterElement.scrollWidth,
           height: posterElement.scrollHeight,
@@ -467,6 +520,8 @@ createApp({
           windowHeight: posterElement.scrollHeight,
           ignoreElements: (element) => {
               if (element.classList.contains('map-drag-hint')) return true;
+              if (element.classList.contains('maplibregl-ctrl-group')) return true;
+              if (element.classList.contains('maplibregl-ctrl')) return true;
               return false;
           }
         });
@@ -519,6 +574,9 @@ createApp({
             if (isMidnight) {
                  borders.forEach(el => el.style.boxShadow = '');
             }
+            if (posterTextEl) {
+                 posterTextEl.setAttribute('style', originalPosterTextStyle);
+            }
             if (mapInstance.value) mapInstance.value.resize();
             isLoading.value = false;
             
@@ -536,6 +594,8 @@ createApp({
         posterElement.style.transition = originalTransition;
         posterElement.style.position = originalPosition || '';
         posterElement.style.left = originalLeft || '';
+        const posterTextEl = posterElement.querySelector('.poster-text');
+        if (posterTextEl) posterTextEl.style.background = '';
         if (mapInstance.value) mapInstance.value.resize();
         isLoading.value = false;
         // Remove overlay on error too
@@ -550,9 +610,50 @@ createApp({
         document.documentElement.style.setProperty('--poster-text', textColor.value);
         document.documentElement.style.setProperty('--poster-bg', bgColor.value);
         
-        // Overlay Controls
-        document.documentElement.style.setProperty('--overlay-opacity', showOverlay.value ? '1' : '0');
-        document.documentElement.style.setProperty('--overlay-height', `${overlayIntensity.value}%`);
+        // Apply gradient as inline style for html2canvas compatibility
+        // Use bgColor with alpha 0 instead of 'transparent' for proper color interpolation
+        const posterTextEl = document.querySelector('.poster-text');
+        if (posterTextEl) {
+            if (showFade.value && fadeIntensity.value > 0) {
+                const sliderValue = fadeIntensity.value; // 0-100
+                const solidBlock = solidBlockHeight.value; // 0-50%
+                const bg = bgColor.value;
+                
+                // Convert hex to rgba
+                const hexToRgba = (hex, alpha) => {
+                    const r = parseInt(hex.slice(1, 3), 16);
+                    const g = parseInt(hex.slice(3, 5), 16);
+                    const b = parseInt(hex.slice(5, 7), 16);
+                    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                };
+                const bgTransparent = hexToRgba(bg, 0);
+                const bgSolid = hexToRgba(bg, 1);
+                
+                const baseHeight = 1800;
+                let elementHeight, gradientStart;
+                
+                if (sliderValue <= 50) {
+                    elementHeight = baseHeight;
+                    gradientStart = 100 - (sliderValue * 2);
+                } else {
+                    const extraHeight = ((sliderValue - 50) / 50) * baseHeight;
+                    elementHeight = baseHeight + extraHeight;
+                    gradientStart = 0;
+                }
+                
+                // Calculate solid block end position (from bottom)
+                // solidBlock 0% = no solid block, fade goes to 100%
+                // solidBlock 50% = solid block takes bottom 50%, fade goes to 50%
+                const fadeEnd = 100 - solidBlock;
+                
+                posterTextEl.style.height = `${elementHeight}px`;
+                // 3-stop gradient: transparent → fade to solid → solid block
+                posterTextEl.style.background = `linear-gradient(to bottom, ${bgTransparent} ${gradientStart}%, ${bgSolid} ${fadeEnd}%, ${bgSolid} 100%)`;
+            } else {
+                posterTextEl.style.background = 'transparent';
+                posterTextEl.style.height = '1800px';
+            }
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -584,7 +685,7 @@ createApp({
     watch(zoom, updateMapPosition);
     watch([
       borderColor, textColor, bgColor, 
-      showOverlay, overlayIntensity
+      showFade, fadeIntensity, solidBlockHeight
     ], applyColors);
     
     watch([
@@ -601,7 +702,7 @@ createApp({
       // State
       lat, lng, zoom,
       searchQuery, searchError, isSearching,
-      posterStyle, orientation, showCoords,
+      posterStyle, orientation, showCoords, showCity, showCountry,
       borderColor, textColor, bgColor,
       city, country,
       isLoading,
@@ -619,7 +720,7 @@ createApp({
       
       // Advanced
       borderStyle, borderOptions,
-      showOverlay, overlayIntensity,
+      showFade, fadeIntensity, solidBlockHeight,
       
       // Fonts
       cityFont, countryFont, coordsFont, fontOptions,
@@ -632,7 +733,8 @@ createApp({
       setOrientation,
       toggleSidebar,
       downloadPoster,
-      resetMapColors
+      resetMapColors,
+      applyColors
     };
   }
 }).mount('#app');
