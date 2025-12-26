@@ -253,22 +253,34 @@ createApp({
     
     async function downloadPoster() {
       isLoading.value = true;
-      
-      // Force map redraw to ensure full resolution
-      if (mapInstance.value) {
-          mapInstance.value.triggerRepaint();
-          await new Promise(r => setTimeout(r, 1000));
-      }
-
       const posterElement = document.getElementById('poster-render');
       if (!posterElement) {
         isLoading.value = false;
         return;
       }
       
+      // Store original styles to restore later
+      const originalScale = posterElement.style.getPropertyValue('--poster-scale');
+      const originalTransition = posterElement.style.transition;
+      
       try {
+        // 1. Temporarily upscale the poster to full native resolution (e.g. 5000px)
+        // Disable transitions to make it instant
+        posterElement.style.transition = 'none';
+        posterElement.style.setProperty('--poster-scale', '1');
+        
+        // 2. Force Map Resize & Redraw at huge size
+        if (mapInstance.value) {
+            mapInstance.value.resize();
+            // Wait for map to settle (tiles load, etc)
+            // Ideally listen for 'idle' but timeout is safer against hanging
+            await new Promise(r => setTimeout(r, 1500)); 
+            mapInstance.value.triggerRepaint();
+        }
+
+        // 3. Capture with html2canvas
         const canvas = await html2canvas(posterElement, {
-          scale: 4, // High Resolution export
+          scale: 1, 
           useCORS: true,
           allowTaint: true,
           backgroundColor: null,
@@ -279,19 +291,50 @@ createApp({
           }
         });
         
-        const link = document.createElement('a');
-        link.download = `MapPoster_${city.value || 'Map'}_${posterStyle.value}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+        // 4. Convert to Blob and Inject DPI Metadata
+        canvas.toBlob(async (blob) => {
+            if (!blob) {
+                 AppUtils.showToast('Failed to create image blob', 'error');
+                 return;
+            }
+            
+            // Inject 300 DPI (pHYs chunk)
+            const highResBlob = await AppUtils.setDpi(blob, 300);
+            
+            const link = document.createElement('a');
+            link.download = `MapPoster_${city.value || 'Map'}_${posterStyle.value}.png`;
+            link.href = URL.createObjectURL(highResBlob);
+            link.click();
+            
+            // Cleanup
+            setTimeout(() => URL.revokeObjectURL(link.href), 100);
+            
+            AppUtils.showToast('Poster downloaded successfully! (300 DPI)', 'success');
+            
+            // Restore state (done in callback because safe)
+            posterElement.style.setProperty('--poster-scale', originalScale);
+            posterElement.style.transition = originalTransition;
+            if (mapInstance.value) mapInstance.value.resize();
+            isLoading.value = false;
+            
+        }, 'image/png');
         
-        AppUtils.showToast('Poster downloaded successfully!', 'success');
+        // Return here properly handling the async flow
+        // The finally block in the original function executes immediately after await html2canvas
+        // But toBlob is callback based. So we need to handle "finally" logic carefully or just rely on the callback
+        // To keep it clean, I'll remove the original finally block execution for the restore part and move it into the callback
+        // BUT, if error occurs in try/catch, we need restoration.
         
       } catch (error) {
         console.error('Export error:', error);
         AppUtils.showToast('Failed to generate poster', 'error');
-      } finally {
+        // Restore state in case of error
+        posterElement.style.setProperty('--poster-scale', originalScale);
+        posterElement.style.transition = originalTransition;
+        if (mapInstance.value) mapInstance.value.resize();
         isLoading.value = false;
       }
+      // Note: "finally" block removed/handled manually because of callback flow overlap
     }
     
     // Apply colors watcher
