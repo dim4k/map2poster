@@ -3,6 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
         <meta
             name="description"
             content="Generate beautiful high-resolution map posters with Mapbox styling. Create personalized city prints for wall art and decoration."
@@ -25,12 +26,6 @@
         <meta property="og:type" content="website" />
 
         <title>Map2Poster — Free Map Poster Generator</title>
-
-        <!-- Favicon -->
-        <link
-            rel="icon"
-            href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>"
-        />
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -77,7 +72,10 @@
                 >
                     <div class="transition-content">
                         <div class="transition-line"></div>
-                        <span class="transition-city">{{ city }}</span>
+                        <span class="transition-city"
+                            >{{ transitionShowCity ? city : 'Map2Poster'
+                            }}</span
+                        >
                         <div class="transition-line"></div>
                     </div>
                 </div>
@@ -958,6 +956,55 @@
 
                     <!-- Main Content: Poster Preview (full viewport) -->
                     <main class="main-content">
+                        <!-- Style switcher -->
+                        <div class="style-switcher">
+                            <button
+                                class="style-switcher__btn"
+                                @click="cyclePosterStyle(-1)"
+                                title="Previous style (←)"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <polyline
+                                        points="15 18 9 12 15 6"
+                                    ></polyline>
+                                </svg>
+                            </button>
+                            <span class="style-switcher__label"
+                                >{{ posterStyle }}</span
+                            >
+                            <button
+                                class="style-switcher__btn"
+                                @click="cyclePosterStyle(1)"
+                                title="Next style (→)"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <polyline
+                                        points="9 18 15 12 9 6"
+                                    ></polyline>
+                                </svg>
+                            </button>
+                        </div>
+
                         <div class="poster-container">
                             <div
                                 id="poster-render"
@@ -969,6 +1016,12 @@
         ]"
                             >
                                 <div class="poster-frame">
+                                    <div
+                                        class="map-loading-overlay"
+                                        :class="{ active: isMapLoading }"
+                                    >
+                                        <div class="map-loading-bar"></div>
+                                    </div>
                                     <div class="map-drag-hint">
                                         <span>✥ Drag to reposition</span>
                                     </div>

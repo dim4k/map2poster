@@ -63,6 +63,8 @@ createApp({
         // UI State
         const isLoading = ref(false);
         const isTransitioning = ref(false);
+        const transitionShowCity = ref(true);
+        const isMapLoading = ref(false);
         const isSidebarOpen = ref(false);
         const activePanel = ref(null);
         const theme = ref(localStorage.getItem("theme") || "light");
@@ -171,6 +173,7 @@ createApp({
             const mapElement = document.getElementById("map");
             if (!mapElement) return;
 
+            isMapLoading.value = true;
             try {
                 mapInstance.value = new maplibregl.Map({
                     container: "map",
@@ -186,7 +189,16 @@ createApp({
 
                 mapInstance.value.on("load", () => {
                     updateMapStyle();
+                    // Hide loading shortly after style is applied
+                    setTimeout(() => {
+                        isMapLoading.value = false;
+                    }, 300);
                 });
+
+                // Safety fallback if load takes too long
+                setTimeout(() => {
+                    isMapLoading.value = false;
+                }, 2000);
 
                 mapInstance.value.on("click", () => {
                     if (window.innerWidth <= 768 && isSidebarOpen.value) {
@@ -212,10 +224,23 @@ createApp({
             }
         }
 
+        let mapStyleTimeout = null;
+        let mapStyleVersion = 0;
+
         function updateMapStyle() {
             if (!mapInstance.value || !mapInstance.value.isStyleLoaded())
                 return;
 
+            // Cancel any pending hide from a previous rapid call
+            if (mapStyleTimeout) {
+                clearTimeout(mapStyleTimeout);
+                mapStyleTimeout = null;
+            }
+
+            mapStyleVersion++;
+            const thisVersion = mapStyleVersion;
+
+            isMapLoading.value = true;
             MapStyles.apply(mapInstance.value, posterStyle.value, {
                 showBuildings: showBuildings.value,
                 buildingColor: buildingColor.value,
@@ -225,6 +250,14 @@ createApp({
                 parkColor: customParkColor.value,
                 backgroundColor: customLandColor.value,
             });
+
+            // Only hide loading if this is still the latest style change
+            mapStyleTimeout = setTimeout(() => {
+                if (thisVersion === mapStyleVersion) {
+                    isMapLoading.value = false;
+                }
+                mapStyleTimeout = null;
+            }, 400);
         }
 
         function updateMapPosition() {
@@ -303,6 +336,40 @@ createApp({
             resetMapColors();
         }
 
+        const styleNames = Object.keys(PosterConfig.styles);
+        const styleIndicatorVisible = ref(false);
+        let styleIndicatorTimeout = null;
+
+        function cyclePosterStyle(direction) {
+            const currentIndex = styleNames.indexOf(posterStyle.value);
+            const nextIndex =
+                (currentIndex + direction + styleNames.length) %
+                styleNames.length;
+            setPosterStyle(styleNames[nextIndex]);
+            applyColors();
+
+            // Flash style indicator
+            styleIndicatorVisible.value = true;
+            clearTimeout(styleIndicatorTimeout);
+            styleIndicatorTimeout = setTimeout(() => {
+                styleIndicatorVisible.value = false;
+            }, 1200);
+        }
+
+        // Keyboard navigation
+        window.addEventListener("keydown", (e) => {
+            if (viewMode.value !== "editor") return;
+            if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
+                return;
+            if (e.key === "ArrowLeft") {
+                e.preventDefault();
+                cyclePosterStyle(-1);
+            } else if (e.key === "ArrowRight") {
+                e.preventDefault();
+                cyclePosterStyle(1);
+            }
+        });
+
         // Landing -> Editor transitions
         async function goToCity() {
             if (!searchQuery.value.trim()) return;
@@ -357,6 +424,7 @@ createApp({
 
         async function enterEditor() {
             // Show transition overlay to hide map loading
+            transitionShowCity.value = true;
             isTransitioning.value = true;
             await nextTick();
 
@@ -393,7 +461,7 @@ createApp({
             if (!posterW || !posterH) return;
 
             const availW = window.innerWidth - 48; // side padding
-            const availH = window.innerHeight - 200; // top area + bottom toolbar + breathing room
+            const availH = window.innerHeight - 260; // top bar + bottom toolbar + switcher + breathing room
             const scale = Math.min(availW / posterW, availH / posterH);
             poster.style.setProperty("--poster-scale", scale.toFixed(5));
         }
@@ -405,14 +473,21 @@ createApp({
             }
         });
 
-        function backToLanding() {
+        async function backToLanding() {
+            // Fade out via transition overlay (no city name)
+            transitionShowCity.value = false;
+            isTransitioning.value = true;
+            await new Promise((r) => setTimeout(r, 400));
+
             viewMode.value = "landing";
             activePanel.value = null;
+
             // Destroy editor map so it can be re-created on next enter
             if (mapInstance.value) {
                 mapInstance.value.remove();
                 mapInstance.value = null;
             }
+
             // Update landing map position
             if (landingMapInstance.value) {
                 landingMapInstance.value.jumpTo({
@@ -420,6 +495,20 @@ createApp({
                     zoom: zoom.value,
                 });
             }
+
+            await nextTick();
+
+            // Re-trigger landing animations by toggling the class
+            const landing = document.querySelector(".landing");
+            if (landing) {
+                landing.classList.add("re-enter");
+                void landing.offsetWidth; // force reflow
+                landing.classList.remove("re-enter");
+            }
+
+            // Fade overlay out
+            await new Promise((r) => setTimeout(r, 300));
+            isTransitioning.value = false;
         }
 
         function resetMapColors() {
@@ -571,6 +660,8 @@ createApp({
             country,
             isLoading,
             isTransitioning,
+            transitionShowCity,
+            isMapLoading,
             isSidebarOpen,
             activePanel,
             displayCity,
@@ -605,6 +696,8 @@ createApp({
             updateMapPosition,
             searchLocation,
             setPosterStyle,
+            cyclePosterStyle,
+            styleIndicatorVisible,
             setOrientation,
             toggleSidebar,
             togglePanel,

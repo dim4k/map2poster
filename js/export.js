@@ -7,28 +7,21 @@ window.PosterExport = {
         const overlay = document.createElement("div");
         overlay.id = "download-overlay";
         overlay.innerHTML = `
-          <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
-            <div style="width: 48px; height: 48px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-            <span style="color: white; font-size: 1.1rem;">Generating high-resolution poster...</span>
+          <div class="download-overlay-content">
+            <div class="download-overlay-line"></div>
+            <span class="download-overlay-text">Exporting poster</span>
+            <div class="download-overlay-line"></div>
           </div>
         `;
-        overlay.style.cssText = `
-          position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(0,0,0,0.9); z-index: 9999;
-          display: flex; align-items: center; justify-content: center;
-        `;
         document.body.appendChild(overlay);
-
-        const style = document.createElement("style");
-        style.id = "download-overlay-style";
-        style.textContent =
-            "@keyframes spin { to { transform: rotate(360deg); } }";
-        document.head.appendChild(style);
     },
 
     removeOverlay() {
-        document.getElementById("download-overlay")?.remove();
-        document.getElementById("download-overlay-style")?.remove();
+        const overlay = document.getElementById("download-overlay");
+        if (overlay) {
+            overlay.style.opacity = "0";
+            setTimeout(() => overlay.remove(), 400);
+        }
     },
 
     async execute({
