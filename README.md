@@ -1,7 +1,6 @@
 # 🗺️ Map2Poster
 
 [![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-try%20it%20now-brightgreen?style=for-the-badge)](https://dim4k.github.io/map2poster/)
-[![GitHub](https://img.shields.io/badge/⭐%20Star%20on%20GitHub-181717?style=for-the-badge&logo=github)](https://github.com/dim4k/map2poster)
 
 > ✨ **Generate stunning high-resolution map posters with customized styling.**
 >
