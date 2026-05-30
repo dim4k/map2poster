@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Mapbox2Image — Modern Stylesheet
+   Map2Poster — Stylesheet
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -8,13 +8,13 @@
 :root {
     /* Colors */
     --color-bg: #0f0f14;
-    --color-surface: rgba(255, 255, 255, 0.05);
-    --color-surface-hover: rgba(255, 255, 255, 0.08);
-    --color-border: rgba(255, 255, 255, 0.1);
+    --color-surface: rgba(255, 255, 255, 0.06);
+    --color-surface-hover: rgba(255, 255, 255, 0.1);
+    --color-border: rgba(255, 255, 255, 0.12);
     --color-text: #ffffff;
-    --color-text-muted: rgba(255, 255, 255, 0.6);
-    --color-accent: #6366f1;
-    --color-accent-hover: #818cf8;
+    --color-text-muted: rgba(255, 255, 255, 0.5);
+    --color-accent: #1a1a1a;
+    --color-accent-hover: #333333;
     --color-success: #22c55e;
     --color-error: #ef4444;
 
@@ -35,31 +35,26 @@
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
 
-    /* Border Radius */
-    --radius-sm: 0.375rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
+    /* Border Radius — square design language */
+    --radius-sm: 2px;
+    --radius-md: 2px;
+    --radius-lg: 4px;
     --radius-full: 9999px;
 
     /* Transitions */
     --transition-fast: 150ms ease;
     --transition-base: 250ms ease;
     --transition-slow: 400ms ease;
-
-    /* Glass Effect */
-    --glass-blur: 20px;
-    --glass-bg: rgba(20, 20, 30, 0.8);
 }
 
 /* Light Theme */
 [data-theme="light"] {
-    --color-bg: #f5f5f7;
-    --color-surface: rgba(255, 255, 255, 0.9);
-    --color-surface-hover: rgba(255, 255, 255, 1);
+    --color-bg: #fafafa;
+    --color-surface: rgba(0, 0, 0, 0.03);
+    --color-surface-hover: rgba(0, 0, 0, 0.06);
     --color-border: rgba(0, 0, 0, 0.1);
     --color-text: #1a1a1a;
-    --color-text-muted: rgba(0, 0, 0, 0.5);
-    --glass-bg: rgba(255, 255, 255, 0.85);
+    --color-text-muted: rgba(0, 0, 0, 0.45);
 }
 
 /* --------------------------------------------------------------------------
@@ -81,114 +76,399 @@ html {
 
 body {
     font-family: var(--font-sans);
-    background-color: var(--color-bg);
-    color: var(--color-text);
+    background-color: #ffffff;
+    color: #1a1a1a;
     min-height: 100vh;
     line-height: 1.5;
     transition: background-color var(--transition-base);
 }
 
 /* --------------------------------------------------------------------------
-   Layout
+   Loading Overlay & Toast
    -------------------------------------------------------------------------- */
-.app {
-    display: flex;
-    min-height: 100vh;
-}
-
-/* Mobile Handle (Hidden by default/desktop) */
-.mobile-handle {
-    display: none;
-}
-
-.sidebar {
+.loading-overlay {
     position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 440px;
-    z-index: 100;
-    padding: 0;
-    overflow: hidden; /* Changed: Clip content to sidebar bounds */
-    transition: transform var(--transition-base);
-    background-color: var(--color-bg);
-    border-right: 1px solid var(--color-border);
-}
-
-.settings-panel {
-    position: absolute; /* Absolutely position within sidebar */
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    overflow-y: scroll !important; /* Force scrollbar to always show */
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-    padding: var(--spacing-md);
-
-    /* Visual Styles */
-    background: var(--glass-bg);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-
-    /* Custom Scrollbar */
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-border) transparent;
-}
-
-.settings-panel::-webkit-scrollbar {
-    width: 6px;
-}
-
-.settings-panel::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.settings-panel::-webkit-scrollbar-thumb {
-    background-color: var(--color-border);
-    border-radius: var(--radius-full);
-}
-
-.settings-panel::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-text-muted);
-}
-
-.main-content {
-    flex: 1;
-    margin-left: 440px; /* Matches sidebar width */
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 9999;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--spacing-xl);
-    min-height: 100vh;
-    transition: margin-left var(--transition-base);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.loading-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.transition-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 600;
+    background: var(--color-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+
+.transition-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.transition-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+        opacity 0.5s ease 0.2s,
+        transform 0.5s ease 0.2s;
+}
+
+.transition-overlay.active .transition-content {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.transition-city {
+    font-family: "Inter", sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-text);
+}
+
+.transition-line {
+    width: 0;
+    height: 1px;
+    background: var(--color-text);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;
+}
+
+.transition-overlay.active .transition-line {
+    width: 60px;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.toast-container {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.toast {
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: white;
+    background: #1a1a1a;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateX(0);
+    transition: all 0.3s ease;
+}
+
+.toast.error {
+    background: var(--color-error);
+}
+
+.toast.success {
+    background: var(--color-success);
 }
 
 /* --------------------------------------------------------------------------
-   Settings Panel (Glassmorphism)
+   LANDING VIEW — Full-viewport map hero
    -------------------------------------------------------------------------- */
-/* .settings-panel duplicate block removed */
+.landing {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    overflow: hidden;
+    background: #eaeaea;
+}
 
-.settings-header {
+.landing-map {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.3;
+    filter: blur(3px);
+}
+
+/* No additional overlay needed — map already blurred and dimmed */
+
+.landing-map canvas,
+.landing-map .maplibregl-canvas-container,
+.landing-map .maplibregl-canvas {
+    pointer-events: none !important;
+}
+
+.landing-hero {
+    position: relative;
+    z-index: 10;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding-bottom: var(--spacing-md);
-    border-bottom: 1px solid var(--color-border);
+    justify-content: center;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 0 2rem;
 }
 
-.settings-title {
-    font-size: 1.25rem;
+.landing-hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0;
+    max-width: 480px;
+    width: 100%;
+}
+
+.landing-eyebrow {
+    font-family: "Inter", sans-serif;
+    font-size: 0.65rem;
     font-weight: 600;
-    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #999;
+    margin-bottom: 0.75rem;
 }
 
-.theme-toggle {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-md);
+.landing-title {
+    font-family: "Montserrat", sans-serif;
+    font-size: clamp(2.8rem, 6vw, 4.5rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: #1a1a1a;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.landing-title-accent {
+    color: #999;
+    font-weight: 300;
+}
+
+.landing-subtitle {
+    font-family: "Inter", sans-serif;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: #666;
+    margin-bottom: 2rem;
+    letter-spacing: -0.01em;
+}
+
+.landing-search {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1.5px solid #1a1a1a;
+    width: 100%;
+    max-width: 380px;
+    height: 46px;
+    margin-bottom: 1rem;
+    transition:
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.landing-search:focus-within {
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+}
+
+.landing-search-input {
+    flex: 1;
+    height: 100%;
+    border: none;
+    outline: none;
+    font-family: "Inter", sans-serif;
+    font-size: 0.9rem;
+    padding: 0 1rem;
+    background: transparent;
+    color: #1a1a1a;
+}
+
+.landing-search-input::placeholder {
+    color: #bbb;
+}
+
+.landing-search-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 100%;
+    background: #1a1a1a;
+    border: none;
+    cursor: pointer;
+    color: #ffffff;
+    transition: background 0.15s ease;
+    flex-shrink: 0;
+}
+
+.landing-search-btn:hover {
+    background: #333;
+}
+
+.landing-cities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    justify-content: center;
+}
+
+.landing-city-pill {
+    padding: 0.4rem 1rem;
+    border: 1.5px solid #ccc;
+    background: transparent;
+    color: #555;
+    font-family: "Inter", sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.landing-city-pill:hover {
+    border-color: #1a1a1a;
+    color: #1a1a1a;
+}
+
+.landing-city-pill--accent {
+    background: #1a1a1a;
+    color: #ffffff;
+    border-color: #1a1a1a;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.landing-city-pill--accent:hover {
+    background: #333;
+    border-color: #333;
+}
+
+.landing-coords {
+    position: absolute;
+    bottom: 1.5rem;
+    right: 2rem;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.1rem;
+}
+
+.landing-coords-city {
+    font-family: "Inter", sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #999;
+}
+
+.landing-coords-latlng {
+    font-family: "Space Mono", monospace;
+    font-size: 0.7rem;
+    color: #bbb;
+    letter-spacing: 0.02em;
+}
+
+/* Hide editor when in landing mode */
+.app-shell:not(.view-editor) .sidebar,
+.app-shell:not(.view-editor) .main-content {
+    display: none;
+}
+
+/* Landing view transitions */
+.landing {
+    transition:
+        opacity 0.4s ease,
+        transform 0.4s ease,
+        visibility 0s 0.4s;
+}
+
+.app-shell.view-editor .landing {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.02);
+    visibility: hidden;
+}
+
+/* Landing entrance animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.landing-eyebrow {
+    animation: fadeInUp 0.5s ease both;
+    animation-delay: 0.15s;
+}
+
+.landing-title {
+    animation: fadeInUp 0.5s ease both;
+    animation-delay: 0.25s;
+}
+
+.landing-subtitle {
+    animation: fadeInUp 0.5s ease both;
+    animation-delay: 0.35s;
+}
+
+.landing-search {
+    animation: fadeInUp 0.5s ease both;
+    animation-delay: 0.45s;
+}
+
+.landing-cities {
+    animation: fadeInUp 0.5s ease both;
+    animation-delay: 0.55s;
+}
+
+.landing-coords {
+    animation: fadeInUp 0.4s ease both;
+    animation-delay: 0.65s;
+}
+
+/* Back button in editor */
+.back-btn {
+    width: 36px;
+    height: 36px;
     border: 1px solid var(--color-border);
     background: var(--color-surface);
     color: var(--color-text);
@@ -199,65 +479,290 @@ body {
     transition: all var(--transition-fast);
 }
 
-.theme-toggle:hover {
+.back-btn:hover {
     background: var(--color-surface-hover);
-    border-color: var(--color-accent);
+    border-color: var(--color-text-muted);
 }
 
-.theme-toggle svg {
-    width: 20px;
-    height: 20px;
+@media (max-width: 768px) {
+    .landing-hero {
+        padding: 0 1.25rem;
+    }
+
+    .landing-hero-content {
+        max-width: 100%;
+    }
+
+    .landing-title {
+        font-size: 2.5rem;
+    }
+
+    .landing-subtitle {
+        font-size: 0.95rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .landing-search {
+        max-width: 100%;
+        height: 44px;
+    }
+
+    .landing-search-btn {
+        width: 44px;
+    }
+
+    .landing-city-pill {
+        font-size: 0.65rem;
+        padding: 0.35rem 0.75rem;
+    }
+
+    .landing-coords {
+        bottom: 1rem;
+        right: 1rem;
+    }
 }
+
+/* --------------------------------------------------------------------------
+   Layout — Editor View (Floating Toolbar)
+   -------------------------------------------------------------------------- */
+.app-shell.view-editor {
+    min-height: 100vh;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+}
+
+.app-shell:not(.view-editor) {
+    display: block;
+}
+
+.main-content {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5.5rem 1rem 7rem;
+}
+
+/* --------------------------------------------------------------------------
+   Floating Action Buttons (top corners)
+   -------------------------------------------------------------------------- */
+.editor-fab {
+    position: fixed;
+    z-index: 300;
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.editor-fab:hover {
+    background: var(--color-surface-hover);
+    border-color: var(--color-text-muted);
+}
+
+.editor-fab--back {
+    top: 1rem;
+    left: 1rem;
+}
+
+.editor-fab--theme {
+    top: 1rem;
+    right: 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   Editor Search Bar (top center, compact)
+   -------------------------------------------------------------------------- */
+.editor-search-bar {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 300;
+    width: min(380px, 60vw);
+}
+
+.editor-search-input {
+    width: 100%;
+    height: 46px;
+    padding: 0 1.2rem;
+    font-family: "Inter", sans-serif;
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    outline: none;
+    transition: border-color var(--transition-fast);
+}
+
+.editor-search-input:focus {
+    border-color: var(--color-text-muted);
+}
+
+.editor-search-input::placeholder {
+    color: var(--color-text-muted);
+}
+
+.editor-search-error {
+    font-size: 0.75rem;
+    color: var(--color-error);
+    margin-top: 0.25rem;
+}
+
+/* --------------------------------------------------------------------------
+   Floating Toolbar (bottom center)
+   -------------------------------------------------------------------------- */
+.editor-toolbar {
+    position: fixed;
+    bottom: 1.25rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 400;
+    display: flex;
+    align-items: stretch;
+    gap: 1px;
+    background: var(--color-border);
+    border: 1px solid var(--color-border);
+}
+
+.toolbar-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    flex: 1;
+    padding: 0.5rem 1.1rem;
+    background: var(--color-bg);
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    font-family: "Inter", sans-serif;
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: all var(--transition-fast);
+    min-width: 60px;
+}
+
+.toolbar-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.toolbar-btn:hover {
+    color: var(--color-text);
+    background: var(--color-surface-hover);
+}
+
+.toolbar-btn.active {
+    color: var(--color-text);
+    background: var(--color-surface);
+}
+
+.toolbar-btn--download {
+    color: #ffffff;
+    background: #1a1a1a;
+}
+
+.toolbar-btn--download:hover {
+    background: #333;
+}
+
+.toolbar-btn--download:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+[data-theme="light"] .toolbar-btn--download {
+    color: #ffffff;
+    background: #1a1a1a;
+}
+
+/* --------------------------------------------------------------------------
+   Floating Panels (above toolbar)
+   -------------------------------------------------------------------------- */
+.floating-panel {
+    position: fixed;
+    bottom: 5.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    z-index: 350;
+    width: min(480px, calc(100vw - 2rem));
+    max-height: calc(100vh - 8rem);
+    overflow-y: auto;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+
+    /* Scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+}
+
+.floating-panel::-webkit-scrollbar {
+    width: 4px;
+}
+
+.floating-panel::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+}
+
+.floating-panel.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateX(-50%) translateY(0);
+}
+
+.floating-panel-inner {
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.fp-section-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text-muted);
+}
+
+/* Panel overlay to close panels on outside click */
+.panel-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 250;
+    background: transparent;
+    pointer-events: none;
+}
+
+.panel-overlay.active {
+    pointer-events: all;
+}
+
+/* Settings panel styles no longer needed — using floating panels */
+
+/* Settings header styles — no longer needed */
 
 /* --------------------------------------------------------------------------
    Form Elements & Groups (Accordion)
    -------------------------------------------------------------------------- */
 
-/* Details/Summary Styling for Accordions */
-details.settings-group {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    /* overflow: hidden removed - was clipping accordion content */
-    transition: all var(--transition-fast);
-}
-
-details.settings-group[open] {
-    border-color: var(--color-accent);
-}
-
-summary.settings-summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--spacing-md);
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.9375rem;
-    color: var(--color-text);
-    list-style: none; /* Hide default triangle */
-}
-
-summary.settings-summary::-webkit-details-marker {
-    display: none;
-}
-
-summary.settings-summary::after {
-    content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    transition: transform var(--transition-fast);
-}
-
-details.settings-group[open] summary.settings-summary::after {
-    transform: rotate(180deg);
-}
-
-.settings-content {
-    padding: var(--spacing-md);
-    border-top: 1px solid var(--color-border);
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-}
+/* Accordion styles — no longer used, panels are flat */
 
 .form-section {
     display: flex;
@@ -304,8 +809,8 @@ details.settings-group[open] summary.settings-summary::after {
 }
 
 .form-input:focus {
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    border-color: var(--color-text-muted);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
 }
 
 .form-input::placeholder {
@@ -435,17 +940,39 @@ details.settings-group[open] summary.settings-summary::after {
 }
 
 .btn-primary {
-    background: var(--color-accent);
-    color: white;
+    background: #1a1a1a;
+    color: #ffffff;
+    border: 1.5px solid #1a1a1a;
+}
+
+[data-theme="light"] .btn-primary {
+    background: #1a1a1a;
+    color: #ffffff;
 }
 
 .btn-primary:hover {
-    background: var(--color-accent-hover);
-    transform: translateY(-1px);
+    background: #333;
+    border-color: #333;
 }
 
 .btn-primary:active {
-    transform: translateY(0);
+    background: #000;
+}
+
+.btn-secondary {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+    background: var(--color-surface-hover);
+    border-color: var(--color-text-muted);
+}
+
+.btn-sm {
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: 0.8125rem;
 }
 
 .btn-lg {
@@ -478,12 +1005,12 @@ details.settings-group[open] summary.settings-summary::after {
 }
 
 .style-option:hover {
-    border-color: var(--color-accent);
+    border-color: var(--color-text-muted);
 }
 
 .style-option.active {
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+    border-color: var(--color-text);
+    box-shadow: none;
 }
 
 .style-option::after {
@@ -547,14 +1074,14 @@ details.settings-group[open] summary.settings-summary::after {
 }
 
 .orientation-btn:hover {
-    border-color: var(--color-accent);
+    border-color: var(--color-text-muted);
     color: var(--color-text);
 }
 
 .orientation-btn.active {
-    background: var(--color-accent);
-    border-color: var(--color-accent);
-    color: white;
+    background: var(--color-text);
+    border-color: var(--color-text);
+    color: var(--color-bg);
 }
 
 .orientation-icon {
@@ -573,8 +1100,8 @@ details.settings-group[open] summary.settings-summary::after {
    Poster Render
    -------------------------------------------------------------------------- */
 .poster-container {
-    max-width: 100%;
-    max-height: calc(100vh - 4rem);
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -862,129 +1389,69 @@ details.settings-group[open] summary.settings-summary::after {
 }
 
 /* --------------------------------------------------------------------------
-   Mobile Responsive
+   Mobile Responsive — Floating Toolbar
    -------------------------------------------------------------------------- */
 
-/* Mobile Toggle Button */
-.mobile-handle {
-    display: none; /* Hidden on desktop */
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    width: 56px;
-    height: 56px;
-    background: var(--color-accent);
-    border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    z-index: 200;
-    cursor: pointer;
-    align-items: center;
-    justify-content: center;
-    transition: transform var(--transition-base);
-}
-
-.mobile-handle-bar {
-    width: 24px;
-    height: 2px;
-    background: white;
-    position: relative;
-    transition: all var(--transition-fast);
-}
-
-.mobile-handle-bar::before,
-.mobile-handle-bar::after {
-    content: "";
-    position: absolute;
-    width: 24px;
-    height: 2px;
-    background: white;
-    left: 0;
-    transition: all var(--transition-fast);
-}
-
-.mobile-handle-bar::before {
-    top: -8px;
-}
-.mobile-handle-bar::after {
-    bottom: -8px;
-}
-
-/* Active Menu Icon State */
-.sidebar.open .mobile-handle-bar {
-    background: transparent;
-}
-.sidebar.open .mobile-handle-bar::before {
-    transform: rotate(45deg);
-    top: 0;
-}
-.sidebar.open .mobile-handle-bar::after {
-    transform: rotate(-45deg);
-    bottom: 0;
-}
-
 @media (max-width: 1024px) {
-    .sidebar {
-        width: 380px;
-    }
-    .main-content {
-        margin-left: 380px;
+    .floating-panel {
+        width: min(420px, calc(100vw - 1.5rem));
     }
 }
 
 @media (max-width: 768px) {
-    .sidebar {
-        transform: translateX(-100%);
-        width: 100%;
-        max-width: 100%;
-        padding: var(--spacing-lg);
-        background: var(--color-bg); /* Opaque background for mobile */
-        box-shadow: none;
-    }
-
-    .sidebar.open {
-        transform: translateX(0);
-    }
-
     .main-content {
-        margin-left: 0;
-        padding: var(--spacing-lg);
+        padding: 3.5rem 0.5rem 5rem;
     }
 
-    .mobile-handle {
-        display: flex; /* Show FAB on mobile */
+    .editor-fab {
+        width: 36px;
+        height: 36px;
     }
 
-    /* Make settings panel span full height/width cleanly on mobile */
-    .settings-panel {
-        border: none;
-        background: transparent;
-        backdrop-filter: none;
-        padding: 0;
-        padding-bottom: 80px; /* Space for FAB */
+    .editor-fab--back {
+        top: 0.75rem;
+        left: 0.75rem;
     }
 
-    .poster {
-        /* Scale down poster preview for mobile - smaller to fit screen */
-        /* NOTE: No !important - allows JS to override for high-res download */
-        --poster-scale: 0.05;
+    .editor-fab--theme {
+        top: 0.75rem;
+        right: 0.75rem;
     }
 
-    /* Fix poster container - ensure it's centered and fits */
-    .poster-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        min-height: 60vh;
-        padding: var(--spacing-lg);
-        box-sizing: border-box;
+    .editor-search-bar {
+        top: 0.75rem;
+        width: min(200px, 45vw);
     }
 
-    .main-content {
-        margin-left: 0;
-        padding: var(--spacing-md); /* More padding to prevent edge clipping */
-        overflow: hidden; /* Prevent horizontal scroll */
-        box-sizing: border-box;
+    .editor-search-input {
+        height: 36px;
+        font-size: 0.8rem;
+    }
+
+    .editor-toolbar {
+        bottom: 0.75rem;
+        gap: 1px;
+    }
+
+    .toolbar-btn {
+        padding: 0.4rem 0.65rem;
+        min-width: 48px;
+        font-size: 0.5rem;
+    }
+
+    .toolbar-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .floating-panel {
+        bottom: 4.5rem;
+        width: calc(100vw - 1rem);
+        max-height: calc(100vh - 7rem);
+    }
+
+    .form-row {
+        gap: var(--spacing-sm);
     }
 }
 
@@ -1012,7 +1479,7 @@ details.settings-group[open] summary.settings-summary::after {
 
 .font-picker-pill:hover {
     background: var(--color-surface-hover);
-    border-color: var(--color-accent);
+    border-color: var(--color-text-muted);
 }
 
 .font-icon-aa {
@@ -1101,118 +1568,4 @@ details.settings-group[open] summary.settings-summary::after {
     right: calc(var(--border-margin) + var(--border-thick) + 15px);
 }
 
-/* --------------------------------------------------------------------------
-   Mobile Responsive
-   -------------------------------------------------------------------------- */
-@media (max-width: 768px) {
-    .app {
-        flex-direction: column;
-    }
-
-    .sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        width: 85%;
-        max-width: 320px;
-        z-index: 1000;
-        transform: translateX(-100%);
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 5px 0 15px rgba(0, 0, 0, 0.3);
-        padding: 0;
-        border-right: none;
-        overflow: visible; /* Allow mobile handle to be visible */
-    }
-
-    .sidebar.open {
-        transform: translateX(0);
-    }
-
-    /* Handle Button */
-    .mobile-handle {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: absolute;
-        top: 20px;
-        right: -48px;
-        width: 48px;
-        height: 48px;
-        background-color: var(--color-bg);
-        border: 1px solid var(--color-border);
-        border-left: none;
-        border-radius: 0 8px 8px 0;
-        cursor: pointer;
-        box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1);
-        z-index: 10;
-    }
-
-    .mobile-handle-bar {
-        width: 24px;
-        height: 2px;
-        background-color: var(--color-text);
-        position: relative;
-        transition: all 0.2s;
-    }
-
-    .mobile-handle-bar::before,
-    .mobile-handle-bar::after {
-        content: "";
-        position: absolute;
-        width: 24px;
-        height: 2px;
-        background-color: var(--color-text);
-        transition: all 0.2s;
-    }
-
-    .mobile-handle-bar::before {
-        top: -8px;
-    }
-    .mobile-handle-bar::after {
-        top: 8px;
-    }
-
-    /* Animate Handle when open */
-    .sidebar.open .mobile-handle-bar {
-        background-color: transparent;
-    }
-
-    .sidebar.open .mobile-handle-bar::before {
-        top: 0;
-        transform: rotate(45deg);
-    }
-
-    .sidebar.open .mobile-handle-bar::after {
-        top: 0;
-        transform: rotate(-45deg);
-    }
-
-    /* Reset Main Content */
-    .main-content {
-        width: 100%;
-        height: 100vh;
-        margin-left: 0 !important; /* Force override */
-    }
-
-    /* Mobile Sidebar Padding */
-    .settings-panel {
-        padding: var(--spacing-md) var(--spacing-lg); /* More left/right padding */
-    }
-
-    /* Smaller style previews on mobile */
-    .style-preview {
-        width: 70px;
-        height: 90px;
-    }
-
-    /* Compact form rows */
-    .form-row {
-        gap: var(--spacing-sm);
-    }
-
-    /* Hide coordinates checkbox on mobile (less essential) */
-    .form-group:has(input[v-model="showCoords"]) {
-        display: none;
-    }
-}
+/* End of styles */

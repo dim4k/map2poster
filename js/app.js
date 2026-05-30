@@ -1,4 +1,4 @@
-const { createApp, ref, computed, watch, onMounted } = Vue;
+const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
 
 createApp({
     setup() {
@@ -6,8 +6,12 @@ createApp({
         // State
         // -------------------------------------------------------------------------
 
+        // View mode: 'landing' or 'editor'
+        const viewMode = ref("landing");
+
         // Map & Location
         const mapInstance = ref(null);
+        const landingMapInstance = ref(null);
         const lat = ref(48.8566); // Paris
         const lng = ref(2.3522);
         const zoom = ref(13);
@@ -58,8 +62,54 @@ createApp({
 
         // UI State
         const isLoading = ref(false);
+        const isTransitioning = ref(false);
         const isSidebarOpen = ref(false);
+        const activePanel = ref(null);
         const theme = ref(localStorage.getItem("theme") || "light");
+
+        // Random cities for "Surprise me!"
+        const randomCities = [
+            { name: "Istanbul", lat: 41.0082, lng: 28.9784, country: "Turkey" },
+            {
+                name: "Buenos Aires",
+                lat: -34.6037,
+                lng: -58.3816,
+                country: "Argentina",
+            },
+            {
+                name: "Marrakech",
+                lat: 31.6295,
+                lng: -7.9811,
+                country: "Morocco",
+            },
+            { name: "Kyoto", lat: 35.0116, lng: 135.7681, country: "Japan" },
+            { name: "Lisbon", lat: 38.7223, lng: -9.1393, country: "Portugal" },
+            {
+                name: "Amsterdam",
+                lat: 52.3676,
+                lng: 4.9041,
+                country: "Netherlands",
+            },
+            {
+                name: "Prague",
+                lat: 50.0755,
+                lng: 14.4378,
+                country: "Czech Republic",
+            },
+            {
+                name: "Bangkok",
+                lat: 13.7563,
+                lng: 100.5018,
+                country: "Thailand",
+            },
+            { name: "Barcelona", lat: 41.3874, lng: 2.1686, country: "Spain" },
+            {
+                name: "Seoul",
+                lat: 37.5665,
+                lng: 126.978,
+                country: "South Korea",
+            },
+        ];
 
         // -------------------------------------------------------------------------
         // Computed
@@ -77,6 +127,42 @@ createApp({
             theme.value = theme.value === "dark" ? "light" : "dark";
             document.documentElement.setAttribute("data-theme", theme.value);
             localStorage.setItem("theme", theme.value);
+        }
+
+        function initLandingMap() {
+            const mapElement = document.getElementById("landing-map");
+            if (!mapElement || landingMapInstance.value) return;
+
+            try {
+                landingMapInstance.value = new maplibregl.Map({
+                    container: "landing-map",
+                    style: "https://tiles.openfreemap.org/styles/positron",
+                    center: [lng.value, lat.value],
+                    zoom: zoom.value,
+                    attributionControl: false,
+                    interactive: false,
+                    maxPitch: 0,
+                    dragRotate: false,
+                });
+
+                landingMapInstance.value.on("load", () => {
+                    // Apply minimal style: hide labels, light roads
+                    const style = landingMapInstance.value.getStyle();
+                    style.layers.forEach((layer) => {
+                        if (layer.type === "symbol") {
+                            landingMapInstance.value.setLayoutProperty(
+                                layer.id,
+                                "visibility",
+                                "none",
+                            );
+                        }
+                    });
+                });
+
+                coords.value = AppUtils.formatCoords(lat.value, lng.value);
+            } catch (error) {
+                console.error("Landing map initialization error:", error);
+            }
         }
 
         function initMap() {
@@ -217,6 +303,125 @@ createApp({
             resetMapColors();
         }
 
+        // Landing -> Editor transitions
+        async function goToCity() {
+            if (!searchQuery.value.trim()) return;
+
+            isSearching.value = true;
+            searchError.value = "";
+
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery.value)}`,
+                );
+                const data = await response.json();
+
+                if (data && data.length > 0) {
+                    const result = data[0];
+                    lat.value = parseFloat(result.lat);
+                    lng.value = parseFloat(result.lon);
+
+                    const parts = result.display_name.split(", ");
+                    if (parts.length > 0) city.value = parts[0];
+                    if (parts.length > 1)
+                        country.value = parts[parts.length - 1];
+
+                    enterEditor();
+                } else {
+                    searchError.value = "Location not found";
+                }
+            } catch (error) {
+                console.error("Search error:", error);
+                searchError.value = "Error searching location";
+            } finally {
+                isSearching.value = false;
+            }
+        }
+
+        function quickCity(cityName) {
+            if (cityName === "random") {
+                const pick =
+                    randomCities[
+                        Math.floor(Math.random() * randomCities.length)
+                    ];
+                lat.value = pick.lat;
+                lng.value = pick.lng;
+                city.value = pick.name;
+                country.value = pick.country;
+                enterEditor();
+            } else {
+                searchQuery.value = cityName;
+                goToCity();
+            }
+        }
+
+        async function enterEditor() {
+            // Show transition overlay to hide map loading
+            isTransitioning.value = true;
+            await nextTick();
+
+            // Wait for overlay to fully cover
+            await new Promise((r) => setTimeout(r, 400));
+
+            viewMode.value = "editor";
+            coords.value = AppUtils.formatCoords(lat.value, lng.value);
+
+            await nextTick();
+            // Let DOM render then init map
+            await new Promise((r) => setTimeout(r, 150));
+            initMap();
+            updateMapPosition();
+            applyColors();
+            resetMapColors();
+            fitPosterToViewport();
+
+            // Wait for map tiles to start rendering
+            await new Promise((r) => setTimeout(r, 600));
+            isTransitioning.value = false;
+        }
+
+        function fitPosterToViewport() {
+            const poster = document.getElementById("poster-render");
+            if (!poster) return;
+
+            const posterW = parseFloat(
+                getComputedStyle(poster).getPropertyValue("--poster-width"),
+            );
+            const posterH = parseFloat(
+                getComputedStyle(poster).getPropertyValue("--poster-height"),
+            );
+            if (!posterW || !posterH) return;
+
+            const availW = window.innerWidth - 48; // side padding
+            const availH = window.innerHeight - 200; // top area + bottom toolbar + breathing room
+            const scale = Math.min(availW / posterW, availH / posterH);
+            poster.style.setProperty("--poster-scale", scale.toFixed(5));
+        }
+
+        // Re-fit on orientation change / resize
+        window.addEventListener("resize", () => {
+            if (viewMode.value === "editor") {
+                fitPosterToViewport();
+            }
+        });
+
+        function backToLanding() {
+            viewMode.value = "landing";
+            activePanel.value = null;
+            // Destroy editor map so it can be re-created on next enter
+            if (mapInstance.value) {
+                mapInstance.value.remove();
+                mapInstance.value = null;
+            }
+            // Update landing map position
+            if (landingMapInstance.value) {
+                landingMapInstance.value.jumpTo({
+                    center: [lng.value, lat.value],
+                    zoom: zoom.value,
+                });
+            }
+        }
+
         function resetMapColors() {
             const colors = MapStyles.colors[posterStyle.value];
             if (!colors) return;
@@ -233,12 +438,17 @@ createApp({
             orientation.value = newOrientation;
             setTimeout(() => {
                 if (mapInstance.value) mapInstance.value.resize();
+                fitPosterToViewport();
             }, 100);
-            if (window.innerWidth <= 768) isSidebarOpen.value = false;
         }
 
         function toggleSidebar() {
             isSidebarOpen.value = !isSidebarOpen.value;
+        }
+
+        function togglePanel(panelName) {
+            activePanel.value =
+                activePanel.value === panelName ? null : panelName;
         }
 
         async function downloadPoster() {
@@ -301,9 +511,8 @@ createApp({
 
         onMounted(() => {
             document.documentElement.setAttribute("data-theme", theme.value);
-            initMap();
-            applyColors();
-            resetMapColors();
+            initLandingMap();
+            coords.value = AppUtils.formatCoords(lat.value, lng.value);
         });
 
         // -------------------------------------------------------------------------
@@ -340,6 +549,9 @@ createApp({
         );
 
         return {
+            // View Mode
+            viewMode,
+
             // State
             lat,
             lng,
@@ -358,7 +570,9 @@ createApp({
             city,
             country,
             isLoading,
+            isTransitioning,
             isSidebarOpen,
+            activePanel,
             displayCity,
             displayCountry,
             displayCoords,
@@ -383,6 +597,9 @@ createApp({
             coordsFont,
             fontOptions: PosterConfig.fontOptions,
 
+            // Theme
+            theme,
+
             // Methods
             toggleTheme,
             updateMapPosition,
@@ -390,9 +607,15 @@ createApp({
             setPosterStyle,
             setOrientation,
             toggleSidebar,
+            togglePanel,
             downloadPoster,
             resetMapColors,
             applyColors,
+
+            // Landing methods
+            goToCity,
+            quickCity,
+            backToLanding,
         };
     },
 }).mount("#app");
