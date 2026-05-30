@@ -7,7 +7,7 @@
 >
 > 🔗 **Try it instantly — no install needed:** [**dim4k.github.io/map2poster**](https://dim4k.github.io/map2poster/)
 
-![Demo](demo.png)
+![Demo](assets/demo.png)
 
 ---
 
@@ -17,12 +17,16 @@
 - **🔍 Search Any Location** — Find cities, addresses, or landmarks instantly
 - **🌗 Dark/Light Themes** — Modern glassmorphism UI with seamless theme switching
 - **🎛️ Customization Options**:
-  - 3 unique poster styles: **Classic**, **Blueprint**, and **Vintage**
-  - **Portrait** & **Landscape** orientations
-  - Custom colors for borders, text, and background
-  - Adjustable zoom level (10-18)
-  - Toggle coordinates and country display
-- **📥 High Resolution Export** — Download at 5000×7000px (or 7000×5000px landscape)
+    - 6 poster styles: **Classic**, **Blueprint**, **Vintage**, **Midnight**, **Swiss**, and **Botanical**
+    - **Portrait** & **Landscape** orientations
+    - Independent border style selection (mix and match!)
+    - Custom colors for borders, text, background, water, roads, parks, and land
+    - Custom fonts for city, country, and coordinates
+    - Adjustable gradient fade and solid block height
+    - Adjustable road width scale and building visibility
+    - Adjustable zoom level (10-18)
+    - Toggle coordinates and country display
+- **📥 High Resolution Export** — Download at 7000×9900px portrait / 9900×7000px landscape (300 DPI, A1 print-ready)
 - **📱 Responsive Design** — Fully functional on desktop and mobile devices
 - **🔒 Privacy Focused** — No data collection, purely client-side rendering
 
@@ -31,34 +35,40 @@
 ## 🚀 Quick Start
 
 ### Online (Recommended)
+
 Just open the app in your browser — nothing to install!
 
 👉 **[dim4k.github.io/map2poster](https://dim4k.github.io/map2poster/)**
 
 ### Local
+
 1. **Clone the repository**
-   ```sh
-   git clone https://github.com/dim4k/map2poster.git
-   ```
+
+    ```sh
+    git clone https://github.com/dim4k/map2poster.git
+    ```
 
 2. **Open `index.html`** in your browser
-   - No build step required! Just open the file directly or serve it with a local server.
-   - Recommended: Use VS Code's "Live Server" extension.
+    - No build step required! Just open the file directly or serve it with a local server.
+    - Recommended: Use VS Code's "Live Server" extension.
 
 3. **Enjoy!**
-   - Search for a city
-   - Tweak the styles
-   - Click **Download Poster**
+    - Search for a city
+    - Tweak the styles
+    - Click **Download Poster**
 
 ---
 
 ## 🎨 Poster Styles
 
-| Style | Description |
-|-------|-------------|
-| **Classic** | Timeless design with bold double borders and clean typography. |
-| **Blueprint** | Technical aesthetic with grid lines and monospaced fonts. |
-| **Vintage** | Warm sepia tones, retro textures, and classic serif fonts. |
+| Style         | Description                                                          |
+| ------------- | -------------------------------------------------------------------- |
+| **Classic**   | Timeless design with bold double borders and clean typography.       |
+| **Blueprint** | Technical aesthetic with cobalt blue lines and monospaced fonts.     |
+| **Vintage**   | Warm sepia tones, retro textures, and classic serif fonts.           |
+| **Midnight**  | Dark neon look with cyan accents and illuminated buildings.          |
+| **Swiss**     | Minimalist design inspired by Swiss graphic design (bold red roads). |
+| **Botanical** | Earthy olive and sage tones with elegant serif typography.           |
 
 ---
 
@@ -67,7 +77,24 @@ Just open the app in your browser — nothing to install!
 - **[Vue 3](https://vuejs.org/)** — Reactive UI and Composition API
 - **[MapLibre GL JS](https://maplibre.org/)** — Open-source WebGL map rendering
 - **[html2canvas](https://html2canvas.hertzen.com/)** — DOM-to-canvas rendering for export
-- **[FileSaver.js](https://github.com/eligrey/FileSaver.js)** — Client-side file saving
+- **[OpenFreeMap](https://openfreemap.org/)** — Free vector map tiles (no API key needed)
+
+---
+
+## 📁 Project Structure
+
+```
+map2poster/
+├── index.html              Main HTML (Vue template)
+├── css/
+│   └── styles.css          All styling (poster, UI, responsive)
+└── js/
+    ├── app.js              Vue app (state, watchers, orchestration)
+    ├── poster-config.js    Style defaults, font & border options
+    ├── map-styles.js       MapLibre layer styling per poster style
+    ├── export.js           High-res PNG export logic + overlay
+    └── utils.js            Helpers (debounce, DPI injection, toast...)
+```
 
 ---
 

@@ -7,43 +7,47 @@ window.MapStyles = {
         classic: {
             water: '#ffffff',
             background: '#eeeeee',
-            roadMajor: '#000000',
-            roadMinor: '#555555',
-            building: '#dcdcdc',
-            park: '#e5e5e5'
+            roads: '#000000',
+            roadsMinor: '#555555',
+            buildings: '#dcdcdc',
+            parks: '#e5e5e5'
         },
         vintage: {
-            background: '#e0d8c8', // Beige/Sepia Land
-            water: '#b8c5cc',      // Muted Blue/Grey
-            roads: '#4a3c31',      // Dark Brown/Coffee
-            buildings: '#d4c5b0',  // Slightly darker beige
-            parks: '#d1c7b8'       // Desaturated Green/Beige
+            background: '#e0d8c8',
+            water: '#b8c5cc',
+            roads: '#4a3c31',
+            buildings: '#d4c5b0',
+            parks: '#d1c7b8'
         },
         blueprint: {
-            background: '#ffffff', // Pure White
-            water: '#e6eaf0',      // Very subtle cool grey/blue
-            roads: '#294380'       // Deep Cobalt Blue
+            background: '#ffffff',
+            water: '#e6eaf0',
+            roads: '#294380',
+            buildings: '#e6eaf0',
+            parks: '#ffffff'
         },
         midnight: {
-            background: '#0a0a0f', // Near Black
-            water: '#1a1a2e',      // Dark Navy
-            roads: '#00f3ff',      // Cyan Neon
+            background: '#0a0a0f',
+            water: '#1a1a2e',
+            roads: '#00f3ff',
             roadsMinor: '#2d2d44',
-            buildings: '#16213e'   // Dark Blue Grey
+            buildings: '#16213e',
+            parks: '#1f2b3e'
         },
         swiss: {
-            background: '#ffffff', // Pure White
-            water: '#e5e5e5',      // Light Grey
-            roads: '#ff3333',      // Swiss Red
-            roadsMinor: '#1a1a1a', // Black
-            buildings: '#dcdcdc'
+            background: '#ffffff',
+            water: '#e5e5e5',
+            roads: '#ff3333',
+            roadsMinor: '#1a1a1a',
+            buildings: '#dcdcdc',
+            parks: '#f0f0f0'
         },
         botanical: {
-            background: '#f1f3f0', // Off-White Sage
-            water: '#b7b7a4',      // Muted Sage
-            roads: '#6b705c',      // Olive Green
-            buildings: '#ddbea9',  // Pale Earth
-            parks: '#a5a58d'       // Greenish Beige
+            background: '#f1f3f0',
+            water: '#b7b7a4',
+            roads: '#6b705c',
+            buildings: '#ddbea9',
+            parks: '#a5a58d'
         }
     },
 
@@ -102,14 +106,14 @@ window.MapStyles = {
         const c = this.colors.classic;
         if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', ops.backgroundColor || c.background);
         if (sourceLayer === 'water' && layer.type === 'fill') map.setPaintProperty(layer.id, 'fill-color', ops.waterColor || c.water);
-        this._handleBuildings(map, layer, sourceLayer, ops.showBuildings, ops.buildingColor || c.building);
+        this._handleBuildings(map, layer, sourceLayer, ops.showBuildings, ops.buildingColor || c.buildings);
         
         if ((sourceLayer === 'park' || sourceLayer === 'landuse' || sourceLayer === 'landcover') && layer.type === 'fill') {
-            map.setPaintProperty(layer.id, 'fill-color', ops.parkColor || c.park);
+            map.setPaintProperty(layer.id, 'fill-color', ops.parkColor || c.parks);
             if (map.getPaintProperty(layer.id, 'fill-outline-color')) map.setPaintProperty(layer.id, 'fill-outline-color', 'rgba(0,0,0,0)');
         }
         if (sourceLayer === 'transportation' && layer.type === 'line') {
-            this._styleRoads(map, layer, ops.roadColor || c.roadMajor, true, ops.roadWidthScale);
+            this._styleRoads(map, layer, ops.roadColor || c.roads, true, ops.roadWidthScale);
         }
         // Airport runways - dark grey for classic
         if (sourceLayer === 'aeroway' && (layer.type === 'fill' || layer.type === 'line')) {

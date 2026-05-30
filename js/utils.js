@@ -97,5 +97,36 @@ window.AppUtils = {
         finalData.set(data.subarray(33), 54);
         
         return new Blob([finalData], { type: 'image/png' });
+    },
+
+    hexToRgba(hex, alpha) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    },
+
+    computeGradientStyle(bgColor, fadeIntensity, solidBlockHeight) {
+        const baseHeight = 2520;
+        const sliderValue = fadeIntensity;
+        let elementHeight, gradientStart;
+
+        if (sliderValue <= 50) {
+            elementHeight = baseHeight;
+            gradientStart = 100 - sliderValue * 2;
+        } else {
+            const extraHeight = ((sliderValue - 50) / 50) * baseHeight;
+            elementHeight = baseHeight + extraHeight;
+            gradientStart = 0;
+        }
+
+        const fadeEnd = 100 - solidBlockHeight;
+        const bgTransparent = AppUtils.hexToRgba(bgColor, 0);
+        const bgSolid = AppUtils.hexToRgba(bgColor, 1);
+
+        return {
+            height: `${elementHeight}px`,
+            background: `linear-gradient(to bottom, ${bgTransparent} ${gradientStart}%, ${bgSolid} ${fadeEnd}%, ${bgSolid} 100%)`
+        };
     }
 };
