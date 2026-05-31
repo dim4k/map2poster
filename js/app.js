@@ -508,6 +508,7 @@ createApp({
             // Show transition overlay to hide map loading
             transitionShowCity.value = true;
             isTransitioning.value = true;
+            searchQuery.value = "";
             await nextTick();
 
             // Wait for overlay to fully cover
