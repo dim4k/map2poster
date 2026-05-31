@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/favicon.png" alt="Map2Poster" width="80" />
+  <img src="assets/favicon.svg" alt="Map2Poster" width="80" />
 </p>
 
 <h1 align="center">Map2Poster</h1>
