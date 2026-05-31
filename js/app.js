@@ -47,6 +47,12 @@ createApp({
         const fadeIntensity = ref(50);
         const solidBlockHeight = ref(20);
 
+        // Map Shape
+        const mapShape = ref("none");
+
+        // Label Placement
+        const labelPlacement = ref("bottom");
+
         const borderColor = ref("#000000");
         const textColor = ref("#000000");
         const bgColor = ref("#ffffff");
@@ -660,21 +666,41 @@ createApp({
                 bgColor.value,
             );
 
-            const posterTextEl = document.querySelector(".poster-text");
-            if (posterTextEl) {
-                if (showFade.value && fadeIntensity.value > 0) {
-                    const grad = AppUtils.computeGradientStyle(
-                        bgColor.value,
-                        fadeIntensity.value,
-                        solidBlockHeight.value,
-                    );
-                    posterTextEl.style.height = grad.height;
-                    posterTextEl.style.background = grad.background;
+            const posterTextEls = document.querySelectorAll(".poster-text");
+            posterTextEls.forEach((posterTextEl) => {
+                if (posterTextEl.classList.contains("poster-text--top")) {
+                    // Top text uses its own gradient direction (top-down)
+                    if (showFade.value && fadeIntensity.value > 0) {
+                        const grad = AppUtils.computeGradientStyle(
+                            bgColor.value,
+                            fadeIntensity.value,
+                            solidBlockHeight.value,
+                        );
+                        posterTextEl.style.height = grad.height;
+                        // Reverse gradient direction for top placement
+                        posterTextEl.style.background = grad.background.replace(
+                            "to top",
+                            "to bottom",
+                        );
+                    } else {
+                        posterTextEl.style.background = "transparent";
+                        posterTextEl.style.height = "2520px";
+                    }
                 } else {
-                    posterTextEl.style.background = "transparent";
-                    posterTextEl.style.height = "2520px";
+                    if (showFade.value && fadeIntensity.value > 0) {
+                        const grad = AppUtils.computeGradientStyle(
+                            bgColor.value,
+                            fadeIntensity.value,
+                            solidBlockHeight.value,
+                        );
+                        posterTextEl.style.height = grad.height;
+                        posterTextEl.style.background = grad.background;
+                    } else {
+                        posterTextEl.style.background = "transparent";
+                        posterTextEl.style.height = "2520px";
+                    }
                 }
-            }
+            });
         }
 
         // -------------------------------------------------------------------------
@@ -704,6 +730,7 @@ createApp({
                 showFade,
                 fadeIntensity,
                 solidBlockHeight,
+                labelPlacement,
             ],
             applyColors,
         );
@@ -719,6 +746,12 @@ createApp({
             ],
             updateMapStyle,
         );
+
+        watch(mapShape, () => {
+            setTimeout(() => {
+                if (mapInstance.value) mapInstance.value.resize();
+            }, 100);
+        });
 
         return {
             // View Mode
@@ -764,6 +797,12 @@ createApp({
             showFade,
             fadeIntensity,
             solidBlockHeight,
+
+            // Map Shape & Label Placement
+            mapShape,
+            mapShapeOptions: PosterConfig.mapShapeOptions,
+            labelPlacement,
+            labelPlacementOptions: PosterConfig.labelPlacementOptions,
 
             // Fonts
             cityFont,

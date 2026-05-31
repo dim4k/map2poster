@@ -1062,14 +1062,14 @@ body {
    -------------------------------------------------------------------------- */
 .style-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--spacing-sm);
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.4rem;
 }
 
 .style-option {
-    aspect-ratio: 7/10;
+    aspect-ratio: 1;
     border: 2px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     cursor: pointer;
     transition: all var(--transition-fast);
     display: flex;
@@ -1078,6 +1078,7 @@ body {
     background: var(--color-surface);
     position: relative;
     overflow: hidden;
+    padding: 3px;
 }
 
 .style-option:hover {
@@ -1086,27 +1087,27 @@ body {
 
 .style-option.active {
     border-color: var(--color-text);
-    box-shadow: none;
+    box-shadow: 0 0 0 1px var(--color-text);
 }
 
 .style-option::after {
     content: attr(data-name);
     position: absolute;
-    bottom: 4px;
-    font-size: 0.625rem;
-    font-weight: 500;
+    bottom: 2px;
+    font-size: 0.5rem;
+    font-weight: 600;
     color: var(--color-text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.03em;
 }
 
 /* Mini poster preview inside style option */
 .style-preview {
-    width: 75%;
-    height: 75%;
-    margin-bottom: 20px;
+    width: 80%;
+    height: 65%;
+    margin-bottom: 10px;
     background: white;
-    border-radius: 2px;
+    border-radius: 1px;
 }
 
 .style-preview.classic {
@@ -1269,7 +1270,7 @@ body {
 }
 
 /* Map - Bottom Layer (z-index: 1) */
-#map {
+.map-shape-container {
     position: absolute;
     top: calc(
         var(--border-margin) + var(--border-thick) + var(--border-thin) +
@@ -1288,6 +1289,48 @@ body {
             var(--border-thick)
     );
     z-index: 1;
+    overflow: hidden;
+}
+
+/* Shape clipping — uses mask-image with SVGs that maintain aspect ratio */
+.map-shape-container.shape-circle {
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='xMidYMid meet'%3E%3Ccircle cx='50' cy='50' r='48' fill='black'/%3E%3C/svg%3E");
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='xMidYMid meet'%3E%3Ccircle cx='50' cy='50' r='48' fill='black'/%3E%3C/svg%3E");
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+}
+
+.map-shape-container.shape-heart {
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='xMidYMid meet'%3E%3Cpath d='M50 88 C25 70 5 55 5 35 C5 20 15 8 30 8 C38 8 45 12 50 20 C55 12 62 8 70 8 C85 8 95 20 95 35 C95 55 75 70 50 88Z' fill='black'/%3E%3C/svg%3E");
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='xMidYMid meet'%3E%3Cpath d='M50 88 C25 70 5 55 5 35 C5 20 15 8 30 8 C38 8 45 12 50 20 C55 12 62 8 70 8 C85 8 95 20 95 35 C95 55 75 70 50 88Z' fill='black'/%3E%3C/svg%3E");
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+}
+
+.map-shape-container.shape-star {
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='xMidYMid meet'%3E%3Cpolygon points='50,5 61,35 95,35 68,55 78,85 50,68 22,85 32,55 5,35 39,35' fill='black'/%3E%3C/svg%3E");
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='xMidYMid meet'%3E%3Cpolygon points='50,5 61,35 95,35 68,55 78,85 50,68 22,85 32,55 5,35 39,35' fill='black'/%3E%3C/svg%3E");
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+}
+
+#map {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     cursor: grab;
 }
 
@@ -1737,6 +1780,221 @@ body {
     bottom: calc(var(--border-margin) + var(--border-thick) + 15px);
     left: calc(var(--border-margin) + var(--border-thick) + 15px);
     right: calc(var(--border-margin) + var(--border-thick) + 15px);
+}
+
+/* MODERN Border - Clean minimal */
+.poster.border-modern .border-line-outer {
+    border-width: 3px;
+}
+
+.poster.border-modern .border-middle,
+.poster.border-modern .border-line-inner {
+    display: none;
+}
+
+/* OCEAN Border - Deep blue glow */
+.poster.border-ocean .border-line-outer {
+    border-width: 4px;
+    box-shadow: inset 0 0 60px rgba(77, 166, 201, 0.1);
+}
+
+.poster.border-ocean .border-line-inner {
+    border-width: 1px;
+    opacity: 0.4;
+}
+
+/* ASPHALT Border - Bold urban */
+.poster.border-asphalt .border-line-outer {
+    border-width: 12px;
+}
+
+.poster.border-asphalt .border-middle {
+    display: none;
+}
+
+.poster.border-asphalt .border-line-inner {
+    border-width: 2px;
+    opacity: 0.5;
+}
+
+/* NEON Border - Glowing */
+.poster.border-neon .border-line-outer {
+    border-width: 3px;
+    box-shadow:
+        0 0 30px var(--poster-border),
+        inset 0 0 30px rgba(255, 0, 255, 0.05);
+}
+
+.poster.border-neon .border-line-inner {
+    border-width: 1px;
+    box-shadow: 0 0 15px var(--poster-border);
+    opacity: 0.6;
+}
+
+/* --------------------------------------------------------------------------
+   Label Placement Variants
+   -------------------------------------------------------------------------- */
+
+/* Top placement */
+.poster.labels-top .poster-text--top {
+    position: absolute;
+    top: var(--border-margin);
+    left: var(--border-margin);
+    right: var(--border-margin);
+    height: 2520px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding-top: 350px;
+    text-align: center;
+    font-family: var(--font-display);
+    color: var(--poster-text);
+    z-index: 5;
+    pointer-events: none;
+    background: linear-gradient(
+        to bottom,
+        var(--poster-bg) 30%,
+        transparent 100%
+    );
+}
+
+.poster.labels-top .poster-text:not(.poster-text--top) {
+    display: none;
+}
+
+/* Center placement */
+.poster .poster-text--center {
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+    height: auto !important;
+    padding: 500px 0;
+    background: radial-gradient(
+        ellipse at center,
+        var(--poster-bg) 20%,
+        transparent 70%
+    ) !important;
+    justify-content: center;
+}
+
+/* Split placement */
+.poster.labels-split .poster-text--top {
+    position: absolute;
+    top: var(--border-margin);
+    left: var(--border-margin);
+    right: var(--border-margin);
+    height: 1600px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding-top: 350px;
+    text-align: center;
+    font-family: var(--font-display);
+    color: var(--poster-text);
+    z-index: 5;
+    pointer-events: none;
+    background: linear-gradient(
+        to bottom,
+        var(--poster-bg) 20%,
+        transparent 100%
+    );
+}
+
+.poster.labels-split .poster-text {
+    height: 1200px;
+    padding-bottom: 350px;
+}
+
+/* --------------------------------------------------------------------------
+   Map Shape UI (Shape Grid)
+   -------------------------------------------------------------------------- */
+
+.shape-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.shape-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+}
+
+.shape-option:hover {
+    border-color: var(--color-text-muted);
+    background: var(--color-surface-hover);
+}
+
+.shape-option.active {
+    border-color: var(--color-text);
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+}
+
+.shape-icon {
+    width: 28px;
+    height: 28px;
+    background: var(--color-text-muted);
+    opacity: 0.6;
+}
+
+.shape-option.active .shape-icon {
+    opacity: 1;
+    background: var(--color-text);
+}
+
+.shape-icon--none {
+    clip-path: inset(5% 5% 5% 5%);
+}
+
+.shape-icon--circle {
+    clip-path: circle(45% at 50% 50%);
+}
+
+.shape-icon--heart {
+    clip-path: polygon(
+        50% 100%,
+        0% 35%,
+        0% 25%,
+        5% 10%,
+        15% 0%,
+        30% 0%,
+        40% 5%,
+        50% 18%,
+        60% 5%,
+        70% 0%,
+        85% 0%,
+        95% 10%,
+        100% 25%,
+        100% 35%
+    );
+}
+
+.shape-icon--star {
+    clip-path: polygon(
+        50% 0%,
+        61% 35%,
+        98% 35%,
+        68% 57%,
+        79% 91%,
+        50% 70%,
+        21% 91%,
+        32% 57%,
+        2% 35%,
+        39% 35%
+    );
 }
 
 /* End of styles */

@@ -71,6 +71,50 @@ window.PosterConfig = {
             buildingColor: "#ddbea9",
             fadeIntensity: 50,
         },
+        modern: {
+            borderColor: "#2c2c2c",
+            textColor: "#2c2c2c",
+            bgColor: "#ffffff",
+            cityFont: "Inter, sans-serif",
+            countryFont: "Inter, sans-serif",
+            coordsFont: "Inter, sans-serif",
+            showBuildings: false,
+            buildingColor: "#e8e8e8",
+            fadeIntensity: 40,
+        },
+        ocean: {
+            borderColor: "#4da6c9",
+            textColor: "#a8d8ea",
+            bgColor: "#1b2838",
+            cityFont: "Raleway, sans-serif",
+            countryFont: "Raleway, sans-serif",
+            coordsFont: "Inter, sans-serif",
+            showBuildings: false,
+            buildingColor: "#1e3448",
+            fadeIntensity: 60,
+        },
+        asphalt: {
+            borderColor: "#e0e0e0",
+            textColor: "#e0e0e0",
+            bgColor: "#2d2d2d",
+            cityFont: "Oswald, sans-serif",
+            countryFont: "Oswald, sans-serif",
+            coordsFont: "Space Mono, monospace",
+            showBuildings: true,
+            buildingColor: "#3a3a3a",
+            fadeIntensity: 50,
+        },
+        neon: {
+            borderColor: "#ff00ff",
+            textColor: "#ff00ff",
+            bgColor: "#1a0030",
+            cityFont: "Space Mono, monospace",
+            countryFont: "Space Mono, monospace",
+            coordsFont: "Space Mono, monospace",
+            showBuildings: true,
+            buildingColor: "#220044",
+            fadeIntensity: 50,
+        },
     },
 
     // Font options for the UI
@@ -92,5 +136,25 @@ window.PosterConfig = {
         { name: "Midnight (Neon)", value: "midnight" },
         { name: "Swiss (Bold)", value: "swiss" },
         { name: "Botanical (Frame)", value: "botanical" },
+        { name: "Modern (Clean)", value: "modern" },
+        { name: "Ocean (Deep)", value: "ocean" },
+        { name: "Asphalt (Urban)", value: "asphalt" },
+        { name: "Neon (Glow)", value: "neon" },
+    ],
+
+    // Map shape options
+    mapShapeOptions: [
+        { name: "None", value: "none" },
+        { name: "Circle", value: "circle" },
+        { name: "Heart", value: "heart" },
+        { name: "Star", value: "star" },
+    ],
+
+    // Label placement options
+    labelPlacementOptions: [
+        { name: "Bottom", value: "bottom" },
+        { name: "Top", value: "top" },
+        { name: "Center", value: "center" },
+        { name: "Split", value: "split" },
     ],
 };

@@ -381,6 +381,62 @@
                                         "
                                     ></div>
                                 </button>
+                                <button
+                                    class="style-option"
+                                    :class="{ active: posterStyle === 'modern' }"
+                                    @click="setPosterStyle('modern')"
+                                    data-name="Modern"
+                                >
+                                    <div
+                                        class="style-preview modern"
+                                        style="
+                                            background: #ffffff;
+                                            border: 2px solid #2c2c2c;
+                                        "
+                                    ></div>
+                                </button>
+                                <button
+                                    class="style-option"
+                                    :class="{ active: posterStyle === 'ocean' }"
+                                    @click="setPosterStyle('ocean')"
+                                    data-name="Ocean"
+                                >
+                                    <div
+                                        class="style-preview ocean"
+                                        style="
+                                            background: #1b2838;
+                                            border: 2px solid #4da6c9;
+                                        "
+                                    ></div>
+                                </button>
+                                <button
+                                    class="style-option"
+                                    :class="{ active: posterStyle === 'asphalt' }"
+                                    @click="setPosterStyle('asphalt')"
+                                    data-name="Asphalt"
+                                >
+                                    <div
+                                        class="style-preview asphalt"
+                                        style="
+                                            background: #2d2d2d;
+                                            border: 2px solid #e0e0e0;
+                                        "
+                                    ></div>
+                                </button>
+                                <button
+                                    class="style-option"
+                                    :class="{ active: posterStyle === 'neon' }"
+                                    @click="setPosterStyle('neon')"
+                                    data-name="Neon"
+                                >
+                                    <div
+                                        class="style-preview neon"
+                                        style="
+                                            background: #1a0030;
+                                            border: 2px solid #ff00ff;
+                                        "
+                                    ></div>
+                                </button>
                             </div>
 
                             <div
@@ -429,6 +485,27 @@
                                         {{ style.name }}
                                     </option>
                                 </select>
+                            </div>
+
+                            <div
+                                class="fp-section-title"
+                                style="margin-top: 0.75rem"
+                            >
+                                Map Shape
+                            </div>
+                            <div class="shape-grid">
+                                <button
+                                    v-for="shape in mapShapeOptions"
+                                    class="shape-option"
+                                    :class="{ active: mapShape === shape.value }"
+                                    @click="mapShape = shape.value"
+                                >
+                                    <div
+                                        class="shape-icon"
+                                        :class="'shape-icon--' + shape.value"
+                                    ></div>
+                                    <span>{{ shape.name }}</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -628,6 +705,23 @@
                                         </select>
                                     </div>
                                 </div>
+                            </div>
+
+                            <div
+                                class="fp-section-title"
+                                style="margin-top: 0.5rem"
+                            >
+                                Placement
+                            </div>
+                            <div class="orientation-toggle">
+                                <button
+                                    v-for="placement in labelPlacementOptions"
+                                    class="orientation-btn"
+                                    :class="{ active: labelPlacement === placement.value }"
+                                    @click="labelPlacement = placement.value"
+                                >
+                                    {{ placement.name }}
+                                </button>
                             </div>
 
                             <div
@@ -1010,7 +1104,9 @@
                                 :class="[
           orientation === 'landscape' ? 'landscape' : '',
           posterStyle !== 'classic' ? 'style-' + posterStyle : '',
-          'border-' + borderStyle
+          'border-' + borderStyle,
+          mapShape !== 'none' ? 'map-shape-' + mapShape : '',
+          'labels-' + labelPlacement
         ]"
                             >
                                 <div class="poster-frame">
@@ -1023,10 +1119,20 @@
                                     <div class="map-drag-hint">
                                         <span>✥ Drag to reposition</span>
                                     </div>
-                                    <div id="map"></div>
-                                    <div class="poster-text">
+                                    <!-- Map shape mask -->
+                                    <div
+                                        class="map-shape-container"
+                                        :class="mapShape !== 'none' ? 'shape-' + mapShape : ''"
+                                    >
+                                        <div id="map"></div>
+                                    </div>
+                                    <!-- Top text (for 'top' and 'split' placements) -->
+                                    <div
+                                        class="poster-text poster-text--top"
+                                        v-if="labelPlacement === 'top' || labelPlacement === 'split'"
+                                    >
                                         <template
-                                            v-if="orientation === 'portrait'"
+                                            v-if="labelPlacement === 'top'"
                                         >
                                             <div
                                                 class="poster-city"
@@ -1058,27 +1164,102 @@
                                         </template>
                                         <template v-else>
                                             <div
-                                                class="poster-title-line"
-                                                v-if="showCity || showCountry"
+                                                class="poster-city"
+                                                v-if="showCity"
+                                                :style="{ fontFamily: cityFont }"
+                                            >
+                                                {{ displayCity }}
+                                            </div>
+                                            <div
+                                                class="poster-country"
+                                                v-if="showCountry && displayCountry"
+                                                :style="{ fontFamily: countryFont }"
                                             >
                                                 <span
-                                                    class="poster-city-inline"
+                                                    class="poster-divider"
+                                                ></span>
+                                                {{ displayCountry }}
+                                                <span
+                                                    class="poster-divider"
+                                                ></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <!-- Bottom text (default + center + split coords) -->
+                                    <div
+                                        class="poster-text"
+                                        :class="{ 'poster-text--center': labelPlacement === 'center' }"
+                                        v-if="labelPlacement === 'bottom' || labelPlacement === 'center' || labelPlacement === 'split'"
+                                    >
+                                        <template
+                                            v-if="labelPlacement === 'bottom' || labelPlacement === 'center'"
+                                        >
+                                            <template
+                                                v-if="orientation === 'portrait'"
+                                            >
+                                                <div
+                                                    class="poster-city"
                                                     v-if="showCity"
                                                     :style="{ fontFamily: cityFont }"
-                                                    >{{ displayCity }}</span
                                                 >
-                                                <span
-                                                    class="poster-separator"
-                                                    v-if="showCity && showCountry && displayCountry"
-                                                    >—</span
-                                                >
-                                                <span
-                                                    class="poster-country-inline"
+                                                    {{ displayCity }}
+                                                </div>
+                                                <div
+                                                    class="poster-country"
                                                     v-if="showCountry && displayCountry"
                                                     :style="{ fontFamily: countryFont }"
-                                                    >{{ displayCountry }}</span
                                                 >
-                                            </div>
+                                                    <span
+                                                        class="poster-divider"
+                                                    ></span>
+                                                    {{ displayCountry }}
+                                                    <span
+                                                        class="poster-divider"
+                                                    ></span>
+                                                </div>
+                                                <div
+                                                    class="poster-coords"
+                                                    v-if="showCoords && displayCoords"
+                                                    :style="{ fontFamily: coordsFont }"
+                                                >
+                                                    {{ displayCoords }}
+                                                </div>
+                                            </template>
+                                            <template v-else>
+                                                <div
+                                                    class="poster-title-line"
+                                                    v-if="showCity || showCountry"
+                                                >
+                                                    <span
+                                                        class="poster-city-inline"
+                                                        v-if="showCity"
+                                                        :style="{ fontFamily: cityFont }"
+                                                        >{{ displayCity }}</span
+                                                    >
+                                                    <span
+                                                        class="poster-separator"
+                                                        v-if="showCity && showCountry && displayCountry"
+                                                        >—</span
+                                                    >
+                                                    <span
+                                                        class="poster-country-inline"
+                                                        v-if="showCountry && displayCountry"
+                                                        :style="{ fontFamily: countryFont }"
+                                                        >{{ displayCountry
+                                                        }}</span
+                                                    >
+                                                </div>
+                                                <div
+                                                    class="poster-coords"
+                                                    v-if="showCoords && displayCoords"
+                                                    :style="{ fontFamily: coordsFont }"
+                                                >
+                                                    {{ displayCoords }}
+                                                </div>
+                                            </template>
+                                        </template>
+                                        <template v-else>
+                                            <!-- split: only coords at bottom -->
                                             <div
                                                 class="poster-coords"
                                                 v-if="showCoords && displayCoords"
