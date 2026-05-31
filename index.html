@@ -589,10 +589,12 @@
                                             v-model="cityFont"
                                             class="form-select form-select-mini"
                                             style="width: 100%"
+                                            :style="{ fontFamily: cityFont }"
                                         >
                                             <option
                                                 v-for="font in fontOptions"
                                                 :value="font.value"
+                                                :style="{ fontFamily: font.value }"
                                             >
                                                 {{ font.name }}
                                             </option>
@@ -614,10 +616,12 @@
                                             v-model="countryFont"
                                             class="form-select form-select-mini"
                                             style="width: 100%"
+                                            :style="{ fontFamily: countryFont }"
                                         >
                                             <option
                                                 v-for="font in fontOptions"
                                                 :value="font.value"
+                                                :style="{ fontFamily: font.value }"
                                             >
                                                 {{ font.name }}
                                             </option>
@@ -632,35 +636,28 @@
                             >
                                 Visibility
                             </div>
-                            <div
-                                class="form-group"
-                                style="
-                                    display: flex;
-                                    flex-wrap: wrap;
-                                    gap: var(--spacing-sm);
-                                "
-                            >
-                                <label class="checkbox-label"
-                                    ><input
-                                        type="checkbox"
-                                        v-model="showCity"
-                                        class="form-checkbox"
-                                    /><span>City</span></label
+                            <div class="orientation-toggle">
+                                <button
+                                    class="orientation-btn"
+                                    :class="{ active: showCity }"
+                                    @click="showCity = !showCity"
                                 >
-                                <label class="checkbox-label"
-                                    ><input
-                                        type="checkbox"
-                                        v-model="showCountry"
-                                        class="form-checkbox"
-                                    /><span>Country</span></label
+                                    City
+                                </button>
+                                <button
+                                    class="orientation-btn"
+                                    :class="{ active: showCountry }"
+                                    @click="showCountry = !showCountry"
                                 >
-                                <label class="checkbox-label"
-                                    ><input
-                                        type="checkbox"
-                                        v-model="showCoords"
-                                        class="form-checkbox"
-                                    /><span>Coords</span></label
+                                    Country
+                                </button>
+                                <button
+                                    class="orientation-btn"
+                                    :class="{ active: showCoords }"
+                                    @click="showCoords = !showCoords"
                                 >
+                                    Coords
+                                </button>
                             </div>
 
                             <div
@@ -669,14 +666,15 @@
                             >
                                 Gradient Fade
                             </div>
-                            <label class="checkbox-label"
-                                ><input
-                                    type="checkbox"
-                                    v-model="showFade"
-                                    @change="applyColors"
-                                    class="form-checkbox"
-                                /><span>Show Fade</span></label
-                            >
+                            <div class="orientation-toggle">
+                                <button
+                                    class="orientation-btn"
+                                    :class="{ active: showFade }"
+                                    @click="showFade = !showFade; applyColors()"
+                                >
+                                    Show Fade
+                                </button>
+                            </div>
                             <div
                                 class="range-container"
                                 v-if="showFade"

@@ -111,6 +111,86 @@ createApp({
                 lng: 126.978,
                 country: "South Korea",
             },
+            {
+                name: "Cape Town",
+                lat: -33.9249,
+                lng: 18.4241,
+                country: "South Africa",
+            },
+            {
+                name: "Reykjavik",
+                lat: 64.1466,
+                lng: -21.9426,
+                country: "Iceland",
+            },
+            { name: "Vienna", lat: 48.2082, lng: 16.3738, country: "Austria" },
+            { name: "Havana", lat: 23.1136, lng: -82.3666, country: "Cuba" },
+            {
+                name: "Singapore",
+                lat: 1.3521,
+                lng: 103.8198,
+                country: "Singapore",
+            },
+            { name: "Florence", lat: 43.7696, lng: 11.2558, country: "Italy" },
+            {
+                name: "Vancouver",
+                lat: 49.2827,
+                lng: -123.1207,
+                country: "Canada",
+            },
+            { name: "Cairo", lat: 30.0444, lng: 31.2357, country: "Egypt" },
+            {
+                name: "Melbourne",
+                lat: -37.8136,
+                lng: 144.9631,
+                country: "Australia",
+            },
+            {
+                name: "Rio de Janeiro",
+                lat: -22.9068,
+                lng: -43.1729,
+                country: "Brazil",
+            },
+            { name: "Dublin", lat: 53.3498, lng: -6.2603, country: "Ireland" },
+            { name: "Hanoi", lat: 21.0278, lng: 105.8342, country: "Vietnam" },
+            {
+                name: "Copenhagen",
+                lat: 55.6761,
+                lng: 12.5683,
+                country: "Denmark",
+            },
+            { name: "Mumbai", lat: 19.076, lng: 72.8777, country: "India" },
+            {
+                name: "San Francisco",
+                lat: 37.7749,
+                lng: -122.4194,
+                country: "USA",
+            },
+            {
+                name: "Edinburgh",
+                lat: 55.9533,
+                lng: -3.1883,
+                country: "Scotland",
+            },
+            { name: "Athens", lat: 37.9838, lng: 23.7275, country: "Greece" },
+            {
+                name: "Dubrovnik",
+                lat: 42.6507,
+                lng: 18.0944,
+                country: "Croatia",
+            },
+            {
+                name: "Mexico City",
+                lat: 19.4326,
+                lng: -99.1332,
+                country: "Mexico",
+            },
+            {
+                name: "Stockholm",
+                lat: 59.3293,
+                lng: 18.0686,
+                country: "Sweden",
+            },
         ];
 
         // -------------------------------------------------------------------------
@@ -140,7 +220,7 @@ createApp({
                     container: "landing-map",
                     style: "https://tiles.openfreemap.org/styles/positron",
                     center: [lng.value, lat.value],
-                    zoom: zoom.value,
+                    zoom: zoom.value - 2,
                     attributionControl: false,
                     interactive: false,
                     maxPitch: 0,
@@ -159,6 +239,8 @@ createApp({
                             );
                         }
                     });
+                    // Reveal map now that labels are hidden
+                    mapElement.classList.add("ready");
                 });
 
                 coords.value = AppUtils.formatCoords(lat.value, lng.value);
@@ -492,7 +574,7 @@ createApp({
             if (landingMapInstance.value) {
                 landingMapInstance.value.jumpTo({
                     center: [lng.value, lat.value],
-                    zoom: zoom.value,
+                    zoom: zoom.value - 3,
                 });
             }
 

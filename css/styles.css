@@ -272,8 +272,13 @@ body {
     position: absolute;
     inset: 0;
     z-index: 0;
-    opacity: 0.3;
-    filter: blur(3px);
+    opacity: 0;
+    filter: blur(1.5px);
+    transition: opacity 0.6s ease;
+}
+
+.landing-map.ready {
+    opacity: 0.4;
 }
 
 /* No additional overlay needed — map already blurred and dimmed */
@@ -793,18 +798,19 @@ body {
 }
 
 .floating-panel-inner {
-    padding: 1rem 1.25rem;
+    padding: 1.25rem 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
 }
 
 .fp-section-title {
     font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
     color: var(--color-text-muted);
+    margin-top: 0.25rem;
 }
 
 /* Panel overlay to close panels on outside click */
@@ -859,14 +865,16 @@ body {
 
 .form-input {
     width: 100%;
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 0.9375rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
     font-family: inherit;
     color: var(--color-text);
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     outline: none;
+    height: 38px;
     transition: all var(--transition-fast);
 }
 
@@ -916,7 +924,7 @@ body {
     -webkit-appearance: none;
     width: 18px;
     height: 18px;
-    background: var(--color-accent);
+    background: var(--color-text);
     border-radius: var(--radius-full);
     cursor: pointer;
     transition: transform var(--transition-fast);
@@ -942,14 +950,15 @@ body {
 }
 
 .color-picker {
-    width: 40px;
-    height: 40px;
-    border: 2px solid var(--color-border);
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     cursor: pointer;
     overflow: hidden;
     padding: 0;
     background: none;
+    flex-shrink: 0;
 }
 
 .color-picker::-webkit-color-swatch-wrapper {
@@ -965,8 +974,9 @@ body {
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right var(--spacing-sm) center;
-    padding-right: calc(var(--spacing-md) + 20px);
+    background-position: right 0.75rem center;
+    background-size: 14px;
+    padding-right: 2.25rem;
 }
 
 /* Checkbox */
@@ -1626,11 +1636,11 @@ body {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    padding: 2px 4px 2px 8px; /* Extra padding left for icon */
-    gap: 6px;
+    padding: 0;
+    gap: 0;
     transition: all var(--transition-fast);
-    max-width: 140px; /* Prevent overflow */
-    min-width: 0; /* Flexbox safety */
+    min-width: 0;
+    overflow: hidden;
 }
 
 .font-picker-pill:hover {
@@ -1644,22 +1654,26 @@ body {
     color: var(--color-text-muted);
     flex-shrink: 0;
     line-height: 1;
+    padding-left: 0.75rem;
 }
 
 .form-select-mini {
-    font-size: 0.75rem;
-    padding: 2px 18px 2px 0; /* Right padding for chevron */
-    height: auto;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    height: 38px;
     border: none;
     background-color: transparent;
     color: var(--color-text);
     cursor: pointer;
+    font-family: var(--font-sans);
 
     /* Custom Chevron */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-position: right 0 center;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 0.6rem center;
     background-repeat: no-repeat;
-    background-size: 10px;
+    background-size: 12px;
 
     /* Overflow handling */
     width: 100%;
@@ -1674,7 +1688,8 @@ body {
 .form-select-mini option {
     background-color: var(--color-bg);
     color: var(--color-text);
-    padding: 4px;
+    padding: 6px 8px;
+    font-size: 0.85rem;
 }
 /* 
    New Poster Styles 
