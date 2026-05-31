@@ -109,8 +109,12 @@ window.AppUtils = {
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     },
 
-    computeGradientStyle(bgColor, fadeIntensity, solidBlockHeight) {
-        const baseHeight = 2520;
+    computeGradientStyle(
+        bgColor,
+        fadeIntensity,
+        solidBlockHeight,
+        baseHeight = 2520,
+    ) {
         const sliderValue = fadeIntensity;
         let elementHeight, gradientStart;
 

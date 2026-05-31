@@ -668,23 +668,34 @@ createApp({
 
             const posterTextEls = document.querySelectorAll(".poster-text");
             posterTextEls.forEach((posterTextEl) => {
-                if (posterTextEl.classList.contains("poster-text--top")) {
+                const isTop =
+                    posterTextEl.classList.contains("poster-text--top");
+                const placement = labelPlacement.value;
+
+                // Determine base height depending on placement
+                let baseHeight = 2520;
+                if (placement === "split") {
+                    baseHeight = isTop ? 1600 : 1200;
+                }
+
+                if (isTop) {
                     // Top text uses its own gradient direction (top-down)
                     if (showFade.value && fadeIntensity.value > 0) {
                         const grad = AppUtils.computeGradientStyle(
                             bgColor.value,
                             fadeIntensity.value,
                             solidBlockHeight.value,
+                            baseHeight,
                         );
                         posterTextEl.style.height = grad.height;
                         // Reverse gradient direction for top placement
                         posterTextEl.style.background = grad.background.replace(
-                            "to top",
                             "to bottom",
+                            "to top",
                         );
                     } else {
                         posterTextEl.style.background = "transparent";
-                        posterTextEl.style.height = "2520px";
+                        posterTextEl.style.height = `${baseHeight}px`;
                     }
                 } else {
                     if (showFade.value && fadeIntensity.value > 0) {
@@ -692,12 +703,13 @@ createApp({
                             bgColor.value,
                             fadeIntensity.value,
                             solidBlockHeight.value,
+                            baseHeight,
                         );
                         posterTextEl.style.height = grad.height;
                         posterTextEl.style.background = grad.background;
                     } else {
                         posterTextEl.style.background = "transparent";
-                        posterTextEl.style.height = "2520px";
+                        posterTextEl.style.height = `${baseHeight}px`;
                     }
                 }
             });
