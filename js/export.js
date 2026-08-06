@@ -35,28 +35,30 @@ window.PosterExport = {
         city,
         onDone,
     }) {
-        const originalScale =
-            posterElement.style.getPropertyValue("--poster-scale");
-        const originalTransition = posterElement.style.transition;
-        const originalPosition = posterElement.style.position;
-        const originalLeft = posterElement.style.left;
         const posterTextEl = posterElement.querySelector(".poster-text");
-        const originalPosterTextStyle =
-            posterTextEl?.getAttribute("style") || "";
-        const isMidnight = posterStyle === "midnight";
-        const borders = posterElement.querySelectorAll(".border-line-outer");
+        const mainContent = document.querySelector(".main-content");
+        const posterContainer = document.querySelector(".poster-container");
+        const glowBorders =
+            posterStyle === "midnight"
+                ? [...posterElement.querySelectorAll(".border-line-outer")]
+                : [];
+
+        // Snapshot every inline style we are about to mutate so we can always roll back.
+        const snapshots = [
+            posterElement,
+            posterTextEl,
+            mainContent,
+            posterContainer,
+            ...glowBorders,
+        ]
+            .filter(Boolean)
+            .map((el) => [el, el.getAttribute("style")]);
 
         const restoreState = () => {
-            posterElement.style.setProperty("--poster-scale", originalScale);
-            posterElement.style.transition = originalTransition;
-            posterElement.style.position = originalPosition || "";
-            posterElement.style.left = originalLeft || "";
-            if (isMidnight) {
-                borders.forEach((el) => (el.style.boxShadow = ""));
-            }
-            if (posterTextEl) {
-                posterTextEl.setAttribute("style", originalPosterTextStyle);
-            }
+            snapshots.forEach(([el, style]) => {
+                if (style === null) el.removeAttribute("style");
+                else el.setAttribute("style", style);
+            });
             if (mapInstance) mapInstance.resize();
             this.removeOverlay();
             onDone();
@@ -71,17 +73,7 @@ window.PosterExport = {
             posterElement.style.position = "absolute";
             posterElement.style.left = "-99999px";
 
-            // MOBILE FIX: Temporarily remove overflow restrictions
-            const mainContent = document.querySelector(".main-content");
-            const posterContainer = document.querySelector(".poster-container");
-            const originalMainOverflow = mainContent?.style.overflow;
-            const originalContainerStyles = {
-                overflow: posterContainer?.style.overflow,
-                position: posterContainer?.style.position,
-                width: posterContainer?.style.width,
-                height: posterContainer?.style.height,
-            };
-
+            // MOBILE FIX: overflow restrictions would clip the upscaled poster
             if (mainContent) mainContent.style.overflow = "visible";
             if (posterContainer) {
                 posterContainer.style.overflow = "visible";
@@ -90,10 +82,7 @@ window.PosterExport = {
                 posterContainer.style.height = "auto";
             }
 
-            // Disable box-shadows during export for 'midnight' style
-            if (isMidnight) {
-                borders.forEach((el) => (el.style.boxShadow = "none"));
-            }
+            glowBorders.forEach((el) => (el.style.boxShadow = "none"));
 
             // Apply gradient as inline style for html2canvas compatibility
             if (posterTextEl && showFade) {
@@ -118,7 +107,11 @@ window.PosterExport = {
                     "transparent",
                     "important",
                 );
-                posterTextEl.style.setProperty("height", "2520px", "important");
+                posterTextEl.style.setProperty(
+                    "height",
+                    `${PosterConfig.textBlockHeights.default}px`,
+                    "important",
+                );
             }
 
             // 2. Force Map Redraw
@@ -140,30 +133,11 @@ window.PosterExport = {
                 height: posterElement.scrollHeight,
                 windowWidth: posterElement.scrollWidth,
                 windowHeight: posterElement.scrollHeight,
-                ignoreElements: (element) => {
-                    if (element.classList.contains("map-drag-hint"))
-                        return true;
-                    if (element.classList.contains("maplibregl-ctrl-group"))
-                        return true;
-                    if (element.classList.contains("maplibregl-ctrl"))
-                        return true;
-                    return false;
-                },
+                ignoreElements: (element) =>
+                    element.classList.contains("map-drag-hint") ||
+                    element.classList.contains("maplibregl-ctrl-group") ||
+                    element.classList.contains("maplibregl-ctrl"),
             });
-
-            // Restore overflow styles immediately after capture
-            if (mainContent)
-                mainContent.style.overflow = originalMainOverflow || "";
-            if (posterContainer) {
-                posterContainer.style.overflow =
-                    originalContainerStyles.overflow || "";
-                posterContainer.style.position =
-                    originalContainerStyles.position || "";
-                posterContainer.style.width =
-                    originalContainerStyles.width || "";
-                posterContainer.style.height =
-                    originalContainerStyles.height || "";
-            }
 
             // 4. Convert to Blob and Inject DPI Metadata
             canvas.toBlob(async (blob) => {

@@ -157,4 +157,54 @@ window.PosterConfig = {
         { name: "Center", value: "center" },
         { name: "Split", value: "split" },
     ],
+
+    // Text block heights in poster pixels — must stay in sync with css/styles.css
+    textBlockHeights: {
+        default: 2520,
+        splitTop: 1600,
+        splitBottom: 1200,
+    },
+
+    // Pool used by the landing page "Random" pill
+    randomCities: [
+        { name: "Istanbul", lat: 41.0082, lng: 28.9784, country: "Turkey" },
+        { name: "Buenos Aires", lat: -34.6037, lng: -58.3816, country: "Argentina" },
+        { name: "Marrakech", lat: 31.6295, lng: -7.9811, country: "Morocco" },
+        { name: "Kyoto", lat: 35.0116, lng: 135.7681, country: "Japan" },
+        { name: "Lisbon", lat: 38.7223, lng: -9.1393, country: "Portugal" },
+        { name: "Amsterdam", lat: 52.3676, lng: 4.9041, country: "Netherlands" },
+        { name: "Prague", lat: 50.0755, lng: 14.4378, country: "Czech Republic" },
+        { name: "Bangkok", lat: 13.7563, lng: 100.5018, country: "Thailand" },
+        { name: "Barcelona", lat: 41.3874, lng: 2.1686, country: "Spain" },
+        { name: "Seoul", lat: 37.5665, lng: 126.978, country: "South Korea" },
+        { name: "Cape Town", lat: -33.9249, lng: 18.4241, country: "South Africa" },
+        { name: "Reykjavik", lat: 64.1466, lng: -21.9426, country: "Iceland" },
+        { name: "Vienna", lat: 48.2082, lng: 16.3738, country: "Austria" },
+        { name: "Havana", lat: 23.1136, lng: -82.3666, country: "Cuba" },
+        { name: "Singapore", lat: 1.3521, lng: 103.8198, country: "Singapore" },
+        { name: "Florence", lat: 43.7696, lng: 11.2558, country: "Italy" },
+        { name: "Vancouver", lat: 49.2827, lng: -123.1207, country: "Canada" },
+        { name: "Cairo", lat: 30.0444, lng: 31.2357, country: "Egypt" },
+        { name: "Melbourne", lat: -37.8136, lng: 144.9631, country: "Australia" },
+        { name: "Rio de Janeiro", lat: -22.9068, lng: -43.1729, country: "Brazil" },
+        { name: "Dublin", lat: 53.3498, lng: -6.2603, country: "Ireland" },
+        { name: "Hanoi", lat: 21.0278, lng: 105.8342, country: "Vietnam" },
+        { name: "Copenhagen", lat: 55.6761, lng: 12.5683, country: "Denmark" },
+        { name: "Mumbai", lat: 19.076, lng: 72.8777, country: "India" },
+        { name: "San Francisco", lat: 37.7749, lng: -122.4194, country: "USA" },
+        { name: "Edinburgh", lat: 55.9533, lng: -3.1883, country: "Scotland" },
+        { name: "Athens", lat: 37.9838, lng: 23.7275, country: "Greece" },
+        { name: "Dubrovnik", lat: 42.6507, lng: 18.0944, country: "Croatia" },
+        { name: "Mexico City", lat: 19.4326, lng: -99.1332, country: "Mexico" },
+        { name: "Stockholm", lat: 59.3293, lng: 18.0686, country: "Sweden" },
+    ],
 };
+
+// Style picker entries, kept in sync with `styles` (order drives the ←/→ switcher)
+window.PosterConfig.styleOptions = Object.keys(window.PosterConfig.styles).map(
+    (value) => ({
+        value,
+        name: value.charAt(0).toUpperCase() + value.slice(1),
+    }),
+);
+

@@ -20,18 +20,19 @@ createApp({
         // Search
         const searchQuery = ref("");
         const searchError = ref("");
-        const isSearching = ref(false);
 
         // Map Customization (Vector)
         const roadWidthScale = ref(1);
         const showBuildings = ref(false);
         const buildingColor = ref("#dcdcdc");
 
-        // Custom Colors
-        const customWaterColor = ref(null);
-        const customRoadColor = ref(null);
-        const customParkColor = ref(null);
-        const customLandColor = ref(null);
+        // Custom Colors — seeded from the default style so the colour inputs
+        // always hold a valid #rrggbb value before resetMapColors() runs.
+        const defaultPalette = MapStyles.colors.classic;
+        const customWaterColor = ref(defaultPalette.water);
+        const customRoadColor = ref(defaultPalette.roads);
+        const customParkColor = ref(defaultPalette.parks);
+        const customLandColor = ref(defaultPalette.background);
 
         // Poster customization
         const posterStyle = ref("classic");
@@ -71,133 +72,8 @@ createApp({
         const isTransitioning = ref(false);
         const transitionShowCity = ref(true);
         const isMapLoading = ref(false);
-        const isSidebarOpen = ref(false);
         const activePanel = ref(null);
         const theme = ref(localStorage.getItem("theme") || "light");
-
-        // Random cities for "Surprise me!"
-        const randomCities = [
-            { name: "Istanbul", lat: 41.0082, lng: 28.9784, country: "Turkey" },
-            {
-                name: "Buenos Aires",
-                lat: -34.6037,
-                lng: -58.3816,
-                country: "Argentina",
-            },
-            {
-                name: "Marrakech",
-                lat: 31.6295,
-                lng: -7.9811,
-                country: "Morocco",
-            },
-            { name: "Kyoto", lat: 35.0116, lng: 135.7681, country: "Japan" },
-            { name: "Lisbon", lat: 38.7223, lng: -9.1393, country: "Portugal" },
-            {
-                name: "Amsterdam",
-                lat: 52.3676,
-                lng: 4.9041,
-                country: "Netherlands",
-            },
-            {
-                name: "Prague",
-                lat: 50.0755,
-                lng: 14.4378,
-                country: "Czech Republic",
-            },
-            {
-                name: "Bangkok",
-                lat: 13.7563,
-                lng: 100.5018,
-                country: "Thailand",
-            },
-            { name: "Barcelona", lat: 41.3874, lng: 2.1686, country: "Spain" },
-            {
-                name: "Seoul",
-                lat: 37.5665,
-                lng: 126.978,
-                country: "South Korea",
-            },
-            {
-                name: "Cape Town",
-                lat: -33.9249,
-                lng: 18.4241,
-                country: "South Africa",
-            },
-            {
-                name: "Reykjavik",
-                lat: 64.1466,
-                lng: -21.9426,
-                country: "Iceland",
-            },
-            { name: "Vienna", lat: 48.2082, lng: 16.3738, country: "Austria" },
-            { name: "Havana", lat: 23.1136, lng: -82.3666, country: "Cuba" },
-            {
-                name: "Singapore",
-                lat: 1.3521,
-                lng: 103.8198,
-                country: "Singapore",
-            },
-            { name: "Florence", lat: 43.7696, lng: 11.2558, country: "Italy" },
-            {
-                name: "Vancouver",
-                lat: 49.2827,
-                lng: -123.1207,
-                country: "Canada",
-            },
-            { name: "Cairo", lat: 30.0444, lng: 31.2357, country: "Egypt" },
-            {
-                name: "Melbourne",
-                lat: -37.8136,
-                lng: 144.9631,
-                country: "Australia",
-            },
-            {
-                name: "Rio de Janeiro",
-                lat: -22.9068,
-                lng: -43.1729,
-                country: "Brazil",
-            },
-            { name: "Dublin", lat: 53.3498, lng: -6.2603, country: "Ireland" },
-            { name: "Hanoi", lat: 21.0278, lng: 105.8342, country: "Vietnam" },
-            {
-                name: "Copenhagen",
-                lat: 55.6761,
-                lng: 12.5683,
-                country: "Denmark",
-            },
-            { name: "Mumbai", lat: 19.076, lng: 72.8777, country: "India" },
-            {
-                name: "San Francisco",
-                lat: 37.7749,
-                lng: -122.4194,
-                country: "USA",
-            },
-            {
-                name: "Edinburgh",
-                lat: 55.9533,
-                lng: -3.1883,
-                country: "Scotland",
-            },
-            { name: "Athens", lat: 37.9838, lng: 23.7275, country: "Greece" },
-            {
-                name: "Dubrovnik",
-                lat: 42.6507,
-                lng: 18.0944,
-                country: "Croatia",
-            },
-            {
-                name: "Mexico City",
-                lat: 19.4326,
-                lng: -99.1332,
-                country: "Mexico",
-            },
-            {
-                name: "Stockholm",
-                lat: 59.3293,
-                lng: 18.0686,
-                country: "Sweden",
-            },
-        ];
 
         // -------------------------------------------------------------------------
         // Computed
@@ -217,14 +93,14 @@ createApp({
             localStorage.setItem("theme", theme.value);
         }
 
-        function initLandingMap() {
+        async function initLandingMap() {
             const mapElement = document.getElementById("landing-map");
             if (!mapElement || landingMapInstance.value) return;
 
             try {
                 landingMapInstance.value = new maplibregl.Map({
                     container: "landing-map",
-                    style: "https://tiles.openfreemap.org/styles/positron",
+                    style: await MapStyles.loadBaseStyle(),
                     center: [lng.value, lat.value],
                     zoom: zoom.value - 2,
                     attributionControl: false,
@@ -234,18 +110,6 @@ createApp({
                 });
 
                 landingMapInstance.value.on("load", () => {
-                    // Apply minimal style: hide labels, light roads
-                    const style = landingMapInstance.value.getStyle();
-                    style.layers.forEach((layer) => {
-                        if (layer.type === "symbol") {
-                            landingMapInstance.value.setLayoutProperty(
-                                layer.id,
-                                "visibility",
-                                "none",
-                            );
-                        }
-                    });
-                    // Reveal map now that labels are hidden
                     mapElement.classList.add("ready");
                 });
 
@@ -255,7 +119,7 @@ createApp({
             }
         }
 
-        function initMap() {
+        async function initMap() {
             if (mapInstance.value) return;
 
             const mapElement = document.getElementById("map");
@@ -265,7 +129,7 @@ createApp({
             try {
                 mapInstance.value = new maplibregl.Map({
                     container: "map",
-                    style: "https://tiles.openfreemap.org/styles/positron",
+                    style: await MapStyles.loadBaseStyle(),
                     center: [lng.value, lat.value],
                     zoom: zoom.value,
                     attributionControl: false,
@@ -287,12 +151,6 @@ createApp({
                 setTimeout(() => {
                     isMapLoading.value = false;
                 }, 2000);
-
-                mapInstance.value.on("click", () => {
-                    if (window.innerWidth <= 768 && isSidebarOpen.value) {
-                        isSidebarOpen.value = false;
-                    }
-                });
 
                 mapInstance.value.on("moveend", () => {
                     const center = mapInstance.value.getCenter();
@@ -351,15 +209,9 @@ createApp({
         function updateMapPosition() {
             if (!mapInstance.value) return;
 
-            let safeLat = parseFloat(lat.value);
-            let safeLng = parseFloat(lng.value);
-            let safeZoom = parseFloat(zoom.value);
-
-            if (typeof lat.value === "string")
-                safeLat = parseFloat(lat.value.replace(",", "."));
-            if (typeof lng.value === "string")
-                safeLng = parseFloat(lng.value.replace(",", "."));
-
+            const safeLat = parseFloat(lat.value);
+            const safeLng = parseFloat(lng.value);
+            const safeZoom = parseFloat(zoom.value);
             if (isNaN(safeLat) || isNaN(safeLng) || isNaN(safeZoom)) return;
 
             mapInstance.value.jumpTo({
@@ -368,40 +220,49 @@ createApp({
             });
         }
 
-        const searchLocation = AppUtils.debounce(async () => {
-            if (!searchQuery.value.trim()) return;
+        // Resolves a free-text query to coordinates + labels, or null when not found.
+        async function geocode(query) {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`,
+            );
+            const data = await response.json();
+            if (!data || data.length === 0) return null;
 
-            isSearching.value = true;
+            const parts = data[0].display_name.split(", ");
+            return {
+                lat: parseFloat(data[0].lat),
+                lng: parseFloat(data[0].lon),
+                city: parts[0],
+                country: parts.length > 1 ? parts[parts.length - 1] : "",
+            };
+        }
+
+        // Runs a geocode and pushes the result into state; returns false on failure.
+        async function applySearch() {
+            if (!searchQuery.value.trim()) return false;
             searchError.value = "";
 
             try {
-                const response = await fetch(
-                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery.value)}`,
-                );
-                const data = await response.json();
-
-                if (data && data.length > 0) {
-                    const result = data[0];
-                    lat.value = parseFloat(result.lat);
-                    lng.value = parseFloat(result.lon);
-
-                    updateMapPosition();
-
-                    const parts = result.display_name.split(", ");
-                    if (parts.length > 0) city.value = parts[0];
-                    if (parts.length > 1)
-                        country.value = parts[parts.length - 1];
-
-                    if (window.innerWidth <= 768) isSidebarOpen.value = false;
-                } else {
+                const place = await geocode(searchQuery.value);
+                if (!place) {
                     searchError.value = "Location not found";
+                    return false;
                 }
+
+                lat.value = place.lat;
+                lng.value = place.lng;
+                city.value = place.city;
+                if (place.country) country.value = place.country;
+                return true;
             } catch (error) {
                 console.error("Search error:", error);
                 searchError.value = "Error searching location";
-            } finally {
-                isSearching.value = false;
+                return false;
             }
+        }
+
+        const searchLocation = AppUtils.debounce(async () => {
+            if (await applySearch()) updateMapPosition();
         }, 500);
 
         function setPosterStyle(style) {
@@ -425,8 +286,6 @@ createApp({
         }
 
         const styleNames = Object.keys(PosterConfig.styles);
-        const styleIndicatorVisible = ref(false);
-        let styleIndicatorTimeout = null;
 
         function cyclePosterStyle(direction) {
             const currentIndex = styleNames.indexOf(posterStyle.value);
@@ -435,13 +294,6 @@ createApp({
                 styleNames.length;
             setPosterStyle(styleNames[nextIndex]);
             applyColors();
-
-            // Flash style indicator
-            styleIndicatorVisible.value = true;
-            clearTimeout(styleIndicatorTimeout);
-            styleIndicatorTimeout = setTimeout(() => {
-                styleIndicatorVisible.value = false;
-            }, 1200);
         }
 
         // Keyboard navigation
@@ -460,54 +312,23 @@ createApp({
 
         // Landing -> Editor transitions
         async function goToCity() {
-            if (!searchQuery.value.trim()) return;
-
-            isSearching.value = true;
-            searchError.value = "";
-
-            try {
-                const response = await fetch(
-                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery.value)}`,
-                );
-                const data = await response.json();
-
-                if (data && data.length > 0) {
-                    const result = data[0];
-                    lat.value = parseFloat(result.lat);
-                    lng.value = parseFloat(result.lon);
-
-                    const parts = result.display_name.split(", ");
-                    if (parts.length > 0) city.value = parts[0];
-                    if (parts.length > 1)
-                        country.value = parts[parts.length - 1];
-
-                    enterEditor();
-                } else {
-                    searchError.value = "Location not found";
-                }
-            } catch (error) {
-                console.error("Search error:", error);
-                searchError.value = "Error searching location";
-            } finally {
-                isSearching.value = false;
-            }
+            if (await applySearch()) enterEditor();
         }
 
         function quickCity(cityName) {
-            if (cityName === "random") {
-                const pick =
-                    randomCities[
-                        Math.floor(Math.random() * randomCities.length)
-                    ];
-                lat.value = pick.lat;
-                lng.value = pick.lng;
-                city.value = pick.name;
-                country.value = pick.country;
-                enterEditor();
-            } else {
+            if (cityName !== "random") {
                 searchQuery.value = cityName;
                 goToCity();
+                return;
             }
+
+            const cities = PosterConfig.randomCities;
+            const pick = cities[Math.floor(Math.random() * cities.length)];
+            lat.value = pick.lat;
+            lng.value = pick.lng;
+            city.value = pick.name;
+            country.value = pick.country;
+            enterEditor();
         }
 
         async function enterEditor() {
@@ -526,7 +347,7 @@ createApp({
             await nextTick();
             // Let DOM render then init map
             await new Promise((r) => setTimeout(r, 150));
-            initMap();
+            await initMap();
             updateMapPosition();
             applyColors();
             resetMapColors();
@@ -620,10 +441,6 @@ createApp({
             }, 100);
         }
 
-        function toggleSidebar() {
-            isSidebarOpen.value = !isSidebarOpen.value;
-        }
-
         function togglePanel(panelName) {
             activePanel.value =
                 activePanel.value === panelName ? null : panelName;
@@ -670,48 +487,30 @@ createApp({
             posterTextEls.forEach((posterTextEl) => {
                 const isTop =
                     posterTextEl.classList.contains("poster-text--top");
-                const placement = labelPlacement.value;
+                const heights = PosterConfig.textBlockHeights;
+                const baseHeight =
+                    labelPlacement.value === "split"
+                        ? isTop
+                            ? heights.splitTop
+                            : heights.splitBottom
+                        : heights.default;
 
-                // Determine base height depending on placement
-                let baseHeight = 2520;
-                if (placement === "split") {
-                    baseHeight = isTop ? 1600 : 1200;
+                if (!showFade.value || fadeIntensity.value === 0) {
+                    posterTextEl.style.background = "transparent";
+                    posterTextEl.style.height = `${baseHeight}px`;
+                    return;
                 }
 
-                if (isTop) {
-                    // Top text uses its own gradient direction (top-down)
-                    if (showFade.value && fadeIntensity.value > 0) {
-                        const grad = AppUtils.computeGradientStyle(
-                            bgColor.value,
-                            fadeIntensity.value,
-                            solidBlockHeight.value,
-                            baseHeight,
-                        );
-                        posterTextEl.style.height = grad.height;
-                        // Reverse gradient direction for top placement
-                        posterTextEl.style.background = grad.background.replace(
-                            "to bottom",
-                            "to top",
-                        );
-                    } else {
-                        posterTextEl.style.background = "transparent";
-                        posterTextEl.style.height = `${baseHeight}px`;
-                    }
-                } else {
-                    if (showFade.value && fadeIntensity.value > 0) {
-                        const grad = AppUtils.computeGradientStyle(
-                            bgColor.value,
-                            fadeIntensity.value,
-                            solidBlockHeight.value,
-                            baseHeight,
-                        );
-                        posterTextEl.style.height = grad.height;
-                        posterTextEl.style.background = grad.background;
-                    } else {
-                        posterTextEl.style.background = "transparent";
-                        posterTextEl.style.height = `${baseHeight}px`;
-                    }
-                }
+                const grad = AppUtils.computeGradientStyle(
+                    bgColor.value,
+                    fadeIntensity.value,
+                    solidBlockHeight.value,
+                    baseHeight,
+                );
+                posterTextEl.style.height = grad.height;
+                posterTextEl.style.background = isTop
+                    ? grad.background.replace("to bottom", "to top")
+                    : grad.background;
             });
         }
 
@@ -775,8 +574,8 @@ createApp({
             zoom,
             searchQuery,
             searchError,
-            isSearching,
             posterStyle,
+            styleOptions: PosterConfig.styleOptions,
             orientation,
             showCoords,
             showCity,
@@ -790,7 +589,6 @@ createApp({
             isTransitioning,
             transitionShowCity,
             isMapLoading,
-            isSidebarOpen,
             activePanel,
             displayCity,
             displayCountry,
@@ -831,9 +629,7 @@ createApp({
             searchLocation,
             setPosterStyle,
             cyclePosterStyle,
-            styleIndicatorVisible,
             setOrientation,
-            toggleSidebar,
             togglePanel,
             downloadPoster,
             resetMapColors,

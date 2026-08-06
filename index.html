@@ -316,125 +316,16 @@
                             <div class="fp-section-title">Style</div>
                             <div class="style-grid">
                                 <button
+                                    v-for="style in styleOptions"
+                                    :key="style.value"
                                     class="style-option"
-                                    :class="{ active: posterStyle === 'classic' }"
-                                    @click="setPosterStyle('classic')"
-                                    data-name="Classic"
-                                >
-                                    <div class="style-preview classic"></div>
-                                </button>
-                                <button
-                                    class="style-option"
-                                    :class="{ active: posterStyle === 'blueprint' }"
-                                    @click="setPosterStyle('blueprint')"
-                                    data-name="Blueprint"
-                                >
-                                    <div class="style-preview blueprint"></div>
-                                </button>
-                                <button
-                                    class="style-option"
-                                    :class="{ active: posterStyle === 'vintage' }"
-                                    @click="setPosterStyle('vintage')"
-                                    data-name="Vintage"
-                                >
-                                    <div class="style-preview vintage"></div>
-                                </button>
-                                <button
-                                    class="style-option"
-                                    :class="{ active: posterStyle === 'midnight' }"
-                                    @click="setPosterStyle('midnight')"
-                                    data-name="Midnight"
+                                    :class="{ active: posterStyle === style.value }"
+                                    @click="setPosterStyle(style.value)"
+                                    :data-name="style.name"
                                 >
                                     <div
-                                        class="style-preview midnight"
-                                        style="
-                                            background: #0a0a0f;
-                                            border: 1px solid #00f3ff;
-                                        "
-                                    ></div>
-                                </button>
-                                <button
-                                    class="style-option"
-                                    :class="{ active: posterStyle === 'swiss' }"
-                                    @click="setPosterStyle('swiss')"
-                                    data-name="Swiss"
-                                >
-                                    <div
-                                        class="style-preview swiss"
-                                        style="
-                                            background: #fff;
-                                            border: 6px solid #000;
-                                        "
-                                    ></div>
-                                </button>
-                                <button
-                                    class="style-option"
-                                    :class="{ active: posterStyle === 'botanical' }"
-                                    @click="setPosterStyle('botanical')"
-                                    data-name="Botanical"
-                                >
-                                    <div
-                                        class="style-preview botanical"
-                                        style="
-                                            background: #f1f3f0;
-                                            border: 2px solid #3a5a40;
-                                        "
-                                    ></div>
-                                </button>
-                                <button
-                                    class="style-option"
-                                    :class="{ active: posterStyle === 'modern' }"
-                                    @click="setPosterStyle('modern')"
-                                    data-name="Modern"
-                                >
-                                    <div
-                                        class="style-preview modern"
-                                        style="
-                                            background: #ffffff;
-                                            border: 2px solid #2c2c2c;
-                                        "
-                                    ></div>
-                                </button>
-                                <button
-                                    class="style-option"
-                                    :class="{ active: posterStyle === 'ocean' }"
-                                    @click="setPosterStyle('ocean')"
-                                    data-name="Ocean"
-                                >
-                                    <div
-                                        class="style-preview ocean"
-                                        style="
-                                            background: #1b2838;
-                                            border: 2px solid #4da6c9;
-                                        "
-                                    ></div>
-                                </button>
-                                <button
-                                    class="style-option"
-                                    :class="{ active: posterStyle === 'asphalt' }"
-                                    @click="setPosterStyle('asphalt')"
-                                    data-name="Asphalt"
-                                >
-                                    <div
-                                        class="style-preview asphalt"
-                                        style="
-                                            background: #2d2d2d;
-                                            border: 2px solid #e0e0e0;
-                                        "
-                                    ></div>
-                                </button>
-                                <button
-                                    class="style-option"
-                                    :class="{ active: posterStyle === 'neon' }"
-                                    @click="setPosterStyle('neon')"
-                                    data-name="Neon"
-                                >
-                                    <div
-                                        class="style-preview neon"
-                                        style="
-                                            background: #1a0030;
-                                            border: 2px solid #ff00ff;
-                                        "
+                                        class="style-preview"
+                                        :class="style.value"
                                     ></div>
                                 </button>
                             </div>
