@@ -1025,6 +1025,7 @@ const app = createApp({
                     bgColor: bgColor.value,
                     mapShapePath: PosterConfig.mapShapes[mapShape.value] || null,
                     previewPixelRatio,
+                    maxCanvasSide: maxCanvas,
                     signal: controller.signal,
                     onStep: (step, tiles) => {
                         if (step === "tiles") {

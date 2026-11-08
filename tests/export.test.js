@@ -37,3 +37,13 @@ test('a pixel cap lowers the dpi (iOS)', () => {
 test('unknown formats are rejected', () => {
   assert.throws(() => PosterExport.exportSize({ ...base, format: 'B5', dpi: 300, orientation: 'portrait' }));
 });
+
+test('supersampling: 2x for small formats, none for A1, bounded by the GPU side', () => {
+  const map = { mapWidth: 7000, mapHeight: 7380 };
+  assert.equal(PosterExport.supersample({ ...map, scale: 0.5 }), 2);
+  assert.equal(PosterExport.supersample({ ...map, scale: 1 }), 1);
+  const a2 = PosterExport.supersample({ ...map, scale: 0.707 });
+  assert.ok(a2 > 1 && a2 < 2);
+  assert.ok(7380 * 0.5 * PosterExport.supersample({ ...map, scale: 0.5, maxSide: 4096 }) <= 4096);
+  assert.equal(PosterExport.supersample({ ...map, scale: 0.5, maxPixels: PosterExport.IOS_MAX_PIXELS }), 1);
+});
