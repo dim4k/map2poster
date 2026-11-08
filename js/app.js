@@ -317,7 +317,7 @@ const app = createApp({
         const showCoords = ref(true);
         const showCity = ref(true);
         const showCountry = ref(true);
-        const showAttribution = ref(true);
+        const showAttribution = ref(false);
 
         // Gradient Fade
         const showFade = ref(true);
@@ -344,7 +344,7 @@ const app = createApp({
 
         // Export
         const exportFormat = ref("A1");
-        const exportDpi = ref(300);
+        const exportDpi = ref(600);
         const iosDevice = PosterExport.isIOS();
 
         // UI State
@@ -459,7 +459,7 @@ const app = createApp({
                 orientation: orientation.value,
                 posterSize: PosterConfig.posterSize,
                 formats: PosterConfig.exportFormats,
-                maxPixels: iosDevice ? PosterExport.IOS_MAX_PIXELS : Infinity,
+                maxPixels: iosDevice ? PosterExport.IOS_MAX_PIXELS : PosterExport.MAX_OUTPUT_PIXELS,
             }),
         );
 
@@ -1024,7 +1024,6 @@ const app = createApp({
                     size,
                     bgColor: bgColor.value,
                     mapShapePath: PosterConfig.mapShapes[mapShape.value] || null,
-                    previewPixelRatio,
                     maxCanvasSide: maxCanvas,
                     signal: controller.signal,
                     onStep: (step, tiles) => {
@@ -1040,9 +1039,7 @@ const app = createApp({
                 notify(`${fileName} saved`, "success", {
                     detail: `${size.width} × ${size.height} px · ${size.dpi} dpi · ${AppUtils.formatBytes(result.blob.size)}`,
                 });
-                if (size.limited) notify(`Resolution lowered to ${size.dpi} dpi on this device.`, "info");
-                if (result.mapDpi < size.dpi * 0.97)
-                    notify(`Your graphics card limits the map to about ${result.mapDpi} dpi. Text and frame stay at ${size.dpi} dpi.`, "info");
+                if (size.limited) notify(`Resolution lowered to ${size.dpi} dpi, the largest image this browser can create.`, "info");
             } catch (error) {
                 if (error && error.name === "AbortError") {
                     notify("Export cancelled.", "info");

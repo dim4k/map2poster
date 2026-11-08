@@ -1,11 +1,10 @@
 // ============================================================================
 // POSTER EXPORT
 // ----------------------------------------------------------------------------
-// 1. The map is re-rendered at the output resolution (setPixelRatio), so the
-//    printed map gets the requested dpi instead of a stretched screen canvas.
-//    When the GPU allows it, it is rendered up to 2x larger and scaled down
-//    (supersampling): thin roads and diagonal edges come out smooth instead of
-//    stair-stepped.
+// 1. The map area is re-rendered at the output resolution by a hidden map,
+//    piece by piece (at most 4096 px per piece), so the size is not bound by
+//    the GPU canvas limit. Pieces are rendered up to 2x larger and scaled down
+//    (supersampling) so thin roads come out smooth.
 // 2. html2canvas captures only the poster overlay (frame, labels, fade) with the
 //    map area left transparent.
 // 3. Both layers are composed on a canvas; the map is clipped to its shape
@@ -19,11 +18,14 @@
     "use strict";
 
     const IOS_MAX_PIXELS = 16777216; // iOS Safari canvas area limit
+    // Largest output: Chrome refuses canvases above ~268M pixels, and the overlay
+    // and output canvases are both held in memory while composing.
+    const MAX_OUTPUT_PIXELS = 150000000;
     const IDLE_TIMEOUT = 60000;
     const MAX_SUPERSAMPLE = 2;
-    // Map canvas budget for supersampling (~256 MB of RGBA). A1 at 1x already
-    // exceeds it, so A1 is never supersampled.
-    const SUPERSAMPLE_PIXELS = 64 * 1024 * 1024;
+    // Map pixels rendered across all pieces; bounds the supersampling (export time).
+    const SUPERSAMPLE_PIXELS = 256 * 1024 * 1024;
+    const PIECE_MARGIN = 8; // device px rendered around each piece, then cropped
 
     function isIOS() {
         if (typeof navigator === "undefined") return false;
@@ -32,8 +34,8 @@
     }
 
     // Output size for a paper format. The poster is designed at A1 (posterSize).
-    // `maxPixels` lowers the dpi when the browser cannot hold the canvas (iOS).
-    function exportSize({ format, dpi, orientation, posterSize, formats, maxPixels = Infinity }) {
+    // `maxPixels` lowers the dpi when the browser cannot hold the canvas.
+    function exportSize({ format, dpi, orientation, posterSize, formats, maxPixels = MAX_OUTPUT_PIXELS }) {
         const short = formats[format];
         if (!short) throw new Error(`Unknown format: ${format}`);
         let effectiveDpi = dpi;
@@ -53,18 +55,25 @@
         return { width, height, scale, dpi: effectiveDpi, requestedDpi: dpi, limited: effectiveDpi < dpi };
     }
 
-    // Supersampling factor for the map canvas (1 = none). The map is rendered at
-    // `scale * factor` and downscaled into the poster; the factor stays within the
-    // GPU canvas side and the pixel budget.
-    function supersample({ mapWidth, mapHeight, scale, maxSide = Infinity, maxPixels = SUPERSAMPLE_PIXELS }) {
+    // Supersampling factor for the map (1 = none). The map is rendered at
+    // `scale * factor` and scaled down into the poster; `maxPixels` bounds the
+    // total rendered pixels, i.e. the export time.
+    function supersample({ mapWidth, mapHeight, scale, maxPixels = SUPERSAMPLE_PIXELS }) {
         const w = mapWidth * scale;
         const h = mapHeight * scale;
         if (!(w > 0 && h > 0)) return 1;
-        const bySide = maxSide / Math.max(w, h);
-        const byArea = Math.sqrt(maxPixels / (w * h));
-        const factor = Math.min(MAX_SUPERSAMPLE, bySide, byArea);
-        // Below 1.25x the gain is not worth the extra GPU memory and render time.
+        const factor = Math.min(MAX_SUPERSAMPLE, Math.sqrt(maxPixels / (w * h)));
+        // Below 1.25x the gain is not worth the extra render time.
         return factor >= 1.25 ? Math.floor(factor * 100) / 100 : 1;
+    }
+
+    // Splits a width × height area into pieces of at most `piece` units.
+    function pieceGrid(width, height, piece) {
+        const pieces = [];
+        for (let y = 0; y < height; y += piece)
+            for (let x = 0; x < width; x += piece)
+                pieces.push({ x, y, w: Math.min(piece, width - x), h: Math.min(piece, height - y) });
+        return pieces;
     }
 
     // Clip path for a shape: 100×100 path fitted ("contain") and centred in `rect`.
@@ -105,25 +114,6 @@
         });
     }
 
-    // Halves the canvas until it is at most 2x the target, so the final draw
-    // averages neighbouring pixels instead of skipping them (bilinear sampling
-    // only looks at 2x2 pixels).
-    function downscaled(source, width, height) {
-        let current = source;
-        while (current.width >= width * 2 && current.height >= height * 2) {
-            const next = document.createElement("canvas");
-            next.width = Math.round(current.width / 2);
-            next.height = Math.round(current.height / 2);
-            const ctx = next.getContext("2d");
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = "high";
-            ctx.drawImage(current, 0, 0, next.width, next.height);
-            if (current !== source) current.width = current.height = 0;
-            current = next;
-        }
-        return current;
-    }
-
     function canvasToBlob(canvas) {
         return new Promise((resolve) => {
             try {
@@ -134,15 +124,64 @@
         });
     }
 
+    // Renders the main map's area (`rect`, CSS px) with a hidden map, piece by
+    // piece at `ratio` device px per CSS px, and draws each piece into `ctx` at
+    // `target` (output px). The main map itself is not touched.
+    async function drawMapPieces({ map, rect, target, ratio, maxPiecePixels, ctx, signal, onStep }) {
+        const margin = Math.ceil(PIECE_MARGIN / ratio);
+        const piece = Math.max(64, Math.floor(maxPiecePixels / ratio) - 2 * margin);
+        const side = piece + 2 * margin;
+        const pieces = pieceGrid(rect.w, rect.h, piece);
+        const scale = target.w / rect.w;
+        const centerOf = (p) => map.unproject([p.x + piece / 2, p.y + piece / 2]);
+
+        const host = document.createElement("div");
+        host.style.cssText = `position:fixed;left:${-(side + 100)}px;top:0;width:${side}px;height:${side}px;pointer-events:none;`;
+        document.body.appendChild(host);
+        let pieceMap = null;
+        onStep("tiles", { requested: pieces.length });
+        try {
+            pieceMap = new map.constructor({
+                container: host,
+                style: map.getStyle(),
+                center: centerOf(pieces[0]),
+                zoom: map.getZoom(),
+                bearing: map.getBearing(),
+                minZoom: 0,
+                maxZoom: 24,
+                interactive: false,
+                attributionControl: false,
+                preserveDrawingBuffer: true,
+                fadeDuration: 0,
+                pixelRatio: ratio,
+                maxCanvasSize: [Math.ceil(side * ratio) + 2, Math.ceil(side * ratio) + 2],
+            });
+            for (const p of pieces) {
+                pieceMap.jumpTo({ center: centerOf(p) });
+                await waitForIdle(pieceMap, signal, IDLE_TIMEOUT);
+                throwIfAborted(signal);
+                const canvas = pieceMap.getCanvas();
+                const k = canvas.width / side; // device px per CSS px actually rendered
+                ctx.drawImage(
+                    canvas,
+                    margin * k, margin * k, p.w * k, p.h * k,
+                    target.x + p.x * scale, target.y + p.y * scale, p.w * scale, p.h * scale,
+                );
+                onStep("tiles", { loaded: 1 });
+            }
+        } finally {
+            if (pieceMap) pieceMap.remove();
+            host.remove();
+        }
+    }
+
     /**
-     * @returns {Promise<{ blob: Blob, mapDpi: number }>}
+     * @returns {Promise<{ blob: Blob }>}
      */
-    async function render({ posterElement, map, size, bgColor, mapShapePath, previewPixelRatio, maxCanvasSide, signal, onStep = () => {} }) {
+    async function render({ posterElement, map, size, bgColor, mapShapePath, maxCanvasSide = 4096, signal, onStep = () => {} }) {
         const body = document.body;
         let overlay = null;
         let output = null;
-        const onTileLoading = (e) => { if (e.tile) onStep("tiles", { requested: 1 }); };
-        const onTileLoaded = (e) => { if (e.tile && e.dataType === "source") onStep("tiles", { loaded: 1 }); };
 
         body.classList.add("is-exporting");
         try {
@@ -150,10 +189,8 @@
             if (document.fonts) await document.fonts.ready;
             throwIfAborted(signal);
 
-            // Map at export resolution: the container keeps its design size, the canvas gets more pixels.
+            // The poster is laid out at its design size; the map area is rendered piece by piece.
             onStep("map");
-            map.on("dataloading", onTileLoading);
-            map.on("data", onTileLoaded);
             map.resize();
             const container = posterElement.querySelector(".map-shape-container");
             const rect = {
@@ -162,19 +199,38 @@
                 w: container.offsetWidth,
                 h: container.offsetHeight,
             };
+            const target = { x: rect.x * size.scale, y: rect.y * size.scale, w: rect.w * size.scale, h: rect.h * size.scale };
+
+            output = document.createElement("canvas");
+            output.width = size.width;
+            output.height = size.height;
+            const ctx = output.getContext("2d");
+            if (!ctx) throw new Error("this browser cannot create the image.");
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, size.width, size.height);
+
+            const ios = isIOS();
             const factor = supersample({
                 mapWidth: rect.w,
                 mapHeight: rect.h,
                 scale: size.scale,
-                maxSide: maxCanvasSide,
-                maxPixels: isIOS() ? IOS_MAX_PIXELS : SUPERSAMPLE_PIXELS,
+                maxPixels: ios ? IOS_MAX_PIXELS : SUPERSAMPLE_PIXELS,
             });
-            map.setPixelRatio(size.scale * factor);
-            await waitForIdle(map, signal, IDLE_TIMEOUT);
-            throwIfAborted(signal);
-
-            const mapCanvas = map.getCanvas();
-            const mapRatio = Math.min(1, mapCanvas.width / (rect.w * size.scale));
+            ctx.save();
+            if (mapShapePath) ctx.clip(shapeClipPath(mapShapePath, target));
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            await drawMapPieces({
+                map,
+                rect,
+                target,
+                ratio: size.scale * factor,
+                maxPiecePixels: Math.min(ios ? 2048 : 4096, maxCanvasSide),
+                ctx,
+                signal,
+                onStep,
+            });
+            ctx.restore();
 
             onStep("compose");
             const posterWidth = posterElement.offsetWidth;
@@ -195,41 +251,15 @@
                         el.classList.contains("map-loading-overlay")),
             });
             throwIfAborted(signal);
-
-            output = document.createElement("canvas");
-            output.width = size.width;
-            output.height = size.height;
-            const ctx = output.getContext("2d");
-            if (!ctx) throw new Error("this browser cannot create the image.");
-            ctx.fillStyle = bgColor;
-            ctx.fillRect(0, 0, size.width, size.height);
-
-            const target = { x: rect.x * size.scale, y: rect.y * size.scale, w: rect.w * size.scale, h: rect.h * size.scale };
-            ctx.save();
-            if (mapShapePath) ctx.clip(shapeClipPath(mapShapePath, target));
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = "high";
-            const mapImage = downscaled(mapCanvas, Math.round(target.w), Math.round(target.h));
-            ctx.drawImage(mapImage, target.x, target.y, target.w, target.h);
-            if (mapImage !== mapCanvas) mapImage.width = mapImage.height = 0;
-            ctx.restore();
             ctx.drawImage(overlay, 0, 0, size.width, size.height);
-
-            // Give the GPU memory back before encoding.
-            map.setPixelRatio(previewPixelRatio());
+            overlay.width = overlay.height = 0;
 
             const blob = await canvasToBlob(output);
-            if (!blob) throw new Error("the image is too large for this browser. Choose a smaller format or 150 dpi.");
+            if (!blob) throw new Error("the image is too large for this browser. Choose a smaller format or a lower resolution.");
             throwIfAborted(signal);
-            return {
-                blob: await AppUtils.setDpi(blob, size.dpi),
-                mapDpi: Math.round(size.dpi * mapRatio),
-            };
+            return { blob: await AppUtils.setDpi(blob, size.dpi) };
         } finally {
-            map.off("dataloading", onTileLoading);
-            map.off("data", onTileLoaded);
             body.classList.remove("is-exporting");
-            map.setPixelRatio(previewPixelRatio());
             map.resize();
             for (const canvas of [overlay, output]) {
                 if (canvas) {
@@ -251,5 +281,5 @@
         setTimeout(() => URL.revokeObjectURL(url), 10000);
     }
 
-    return { IOS_MAX_PIXELS, isIOS, exportSize, supersample, render, saveBlob };
+    return { IOS_MAX_PIXELS, MAX_OUTPUT_PIXELS, isIOS, exportSize, supersample, pieceGrid, render, saveBlob };
 });

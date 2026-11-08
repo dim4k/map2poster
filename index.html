@@ -781,7 +781,7 @@
                                 {{ exportFormat }} · {{ orientation }} · {{ exportInfo.width }} × {{ exportInfo.height }} px · {{ exportInfo.dpi }} dpi PNG
                             </p>
                             <p v-if="exportInfo.limited" class="form-hint">
-                                Lowered to {{ exportInfo.dpi }} dpi: this device cannot hold a larger image.
+                                Lowered to {{ exportInfo.dpi }} dpi: the largest image this browser can create.
                             </p>
                             <button type="button" class="btn btn-primary btn-block" @click="downloadPoster" :disabled="exportState.open">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1042,7 +1042,7 @@
                                             <span :style="{ width: tileProgress === null ? null : tileProgress + '%' }"></span>
                                         </div>
                                         <span class="form-hint">
-                                            {{ exportState.requested ? exportState.loaded + ' / ' + exportState.requested + ' tiles' : 'Tiles already loaded, drawing…' }}
+                                            {{ exportState.requested ? 'Section ' + exportState.loaded + ' / ' + exportState.requested : 'Preparing the map…' }}
                                         </span>
                                     </div>
                                 </li>

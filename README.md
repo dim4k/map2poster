@@ -33,7 +33,7 @@
 - **Typography** — 7 fonts, independent per label (city, country, coordinates); long city names shrink to fit the frame
 - **Orientation** — Portrait & Landscape
 - **Gradient fade** — Adjustable intensity and solid block height
-- **High-res export** — A1 to A4 at 300 or 150 dpi (A1 300 dpi = 7000×9900 px); the map itself is rendered at the export resolution, and shaped maps (circle, heart, star) are exported as shown
+- **High-res export** — A1 to A4 at 600, 300 or 150 dpi (A3 600 dpi = A1 300 dpi = 7000×9900 px; A1 600 dpi is capped around 440 dpi, the largest image a browser can create). The map is re-rendered piece by piece at 2x and scaled down, so it is not limited by the graphics card, and shaped maps (circle, heart, star) are exported as shown
 - **Privacy** — Entirely client-side, no data collection
 
 ## 🚀 Quick Start
@@ -66,7 +66,7 @@ npm test   # Node 22+
 
 ## ⚖️ Credits
 
-Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), tiles by [OpenFreeMap](https://openfreemap.org/) and [OpenMapTiles](https://openmaptiles.org/). The poster carries a small OpenStreetMap credit by default (Labels → Visibility → © OSM); keep it when you share or sell prints.
+Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), tiles by [OpenFreeMap](https://openfreemap.org/) and [OpenMapTiles](https://openmaptiles.org/). A small OpenStreetMap credit can be added to the poster (Labels → Visibility → © OSM, off by default); turn it on when you share or sell prints.
 
 ## 📝 License
 

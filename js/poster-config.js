@@ -130,7 +130,7 @@
             A3: 29.7,
             A4: 21,
         },
-        exportDpis: [300, 150],
+        exportDpis: [600, 300, 150],
 
         // Pool used by the landing page "Random" pill
         randomCities: [
