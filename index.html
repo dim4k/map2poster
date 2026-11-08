@@ -6,11 +6,11 @@
         <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
         <meta
             name="description"
-            content="Generate beautiful high-resolution map posters with Mapbox styling. Create personalized city prints for wall art and decoration."
+            content="Map2Poster: generate high-resolution city map posters from OpenStreetMap data. Free, open source and fully client-side."
         />
         <meta
             name="keywords"
-            content="map poster, city print, mapbox, wall art, custom map"
+            content="map poster, city print, openstreetmap, maplibre, wall art, custom map"
         />
         <meta name="author" content="Map2Poster" />
 
@@ -24,32 +24,58 @@
             content="Create stunning map posters. Free & Open Source."
         />
         <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://dim4k.github.io/map2poster/" />
 
         <title>Map2Poster — Free Map Poster Generator</title>
+
+        <!-- Apply the saved (or system) UI theme before the first paint -->
+        <script>
+            (function () {
+                var theme = null;
+                try {
+                    theme = localStorage.getItem("theme");
+                } catch (e) {}
+                if (theme !== "light" && theme !== "dark") {
+                    theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+                }
+                document.documentElement.setAttribute("data-theme", theme);
+            })();
+        </script>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@300;400;700;900&family=Space+Mono:wght@400;700&family=Playfair+Display:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&family=Oswald:wght@400;700&family=Raleway:wght@300;400;700&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Montserrat:wght@300;400;700;900&family=Space+Mono:wght@400;700&family=Playfair+Display:wght@400;700&family=Lora:wght@400;700&family=Oswald:wght@300;400;700&family=Raleway:wght@300;400;700&display=swap"
             rel="stylesheet"
         />
 
         <!-- MapLibre GL JS -->
         <link
-            href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
             rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css"
+            integrity="sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V"
+            crossorigin="anonymous"
         />
-        <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+        <script
+            src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"
+            integrity="sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj"
+            crossorigin="anonymous"
+        ></script>
 
-        <!-- html2canvas -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-        <!-- FileSaver -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+        <!-- html2canvas (poster frame and labels; the map is composed separately) -->
+        <script
+            src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"
+            integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H"
+            crossorigin="anonymous"
+        ></script>
 
         <!-- Vue 3 -->
-        <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+        <script
+            src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"
+            integrity="sha384-W/1Fp/LgAYO/oTn9Gs+PbeWuMuq1eQCnUMPCeg8POmMYchhzxctjEqtbiCIxDOON"
+            crossorigin="anonymous"
+        ></script>
 
         <link rel="stylesheet" href="css/styles.css" />
     </head>
@@ -60,15 +86,11 @@
                 class="app-shell"
                 :class="{ 'view-editor': viewMode === 'editor' }"
             >
-                <!-- Loading Overlay -->
-                <div class="loading-overlay" :class="{ active: isLoading }">
-                    <div class="spinner"></div>
-                </div>
-
                 <!-- Transition Overlay (landing → editor) -->
                 <div
                     class="transition-overlay"
                     :class="{ active: isTransitioning }"
+                    aria-hidden="true"
                 >
                     <div class="transition-content">
                         <div class="transition-line"></div>
@@ -80,8 +102,39 @@
                     </div>
                 </div>
 
-                <!-- Toast Container -->
-                <div class="toast-container"></div>
+                <!-- Toasts -->
+                <div class="toast-container" aria-live="polite">
+                    <div
+                        v-for="toast in toasts"
+                        :key="toast.id"
+                        class="toast"
+                        :class="toast.type"
+                        :role="toast.type === 'error' ? 'alert' : 'status'"
+                    >
+                        <div class="toast-body">
+                            <span>{{ toast.message }}</span>
+                            <span v-if="toast.detail" class="toast-detail"
+                                >{{ toast.detail }}</span
+                            >
+                        </div>
+                        <button
+                            v-if="toast.action"
+                            type="button"
+                            class="toast-action"
+                            @click="runToastAction(toast)"
+                        >
+                            {{ toast.action.label }}
+                        </button>
+                        <button
+                            type="button"
+                            class="toast-close"
+                            aria-label="Dismiss"
+                            @click="dismissToast(toast.id)"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
 
                 <!-- ============================================================
                  LANDING VIEW — Full-viewport map + centered hero
@@ -103,17 +156,33 @@
                             </p>
                             <div class="landing-search">
                                 <input
-                                    v-model="searchQuery"
-                                    @keydown.enter="goToCity"
-                                    type="text"
+                                    v-model="landingSearch.state.query"
+                                    @input="landingSearch.onInput"
+                                    @keydown="landingSearch.onKeydown"
+                                    type="search"
                                     class="landing-search-input"
                                     placeholder="Enter a city name..."
+                                    aria-label="Search a city or place"
+                                    role="combobox"
+                                    aria-autocomplete="list"
+                                    :aria-expanded="landingSearch.state.open ? 'true' : 'false'"
+                                    aria-controls="landing-results"
+                                    :aria-activedescendant="landingSearch.state.open && landingSearch.state.active >= 0 ? 'landing-result-' + landingSearch.state.active : null"
+                                    autocomplete="off"
                                 />
                                 <button
                                     class="landing-search-btn"
-                                    @click="goToCity"
+                                    type="button"
+                                    @click="landingSearch.run"
+                                    :aria-label="landingSearch.state.loading ? 'Searching' : 'Search'"
+                                    :aria-busy="landingSearch.state.loading ? 'true' : 'false'"
                                 >
+                                    <span
+                                        v-if="landingSearch.state.loading"
+                                        class="search-spinner"
+                                    ></span>
                                     <svg
+                                        v-else
                                         xmlns="http://www.w3.org/2000/svg"
                                         width="18"
                                         height="18"
@@ -123,44 +192,51 @@
                                         stroke-width="2"
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
+                                        aria-hidden="true"
                                     >
-                                        <line
-                                            x1="5"
-                                            y1="12"
-                                            x2="19"
-                                            y2="12"
-                                        ></line>
-                                        <polyline
-                                            points="12 5 19 12 12 19"
-                                        ></polyline>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                        <polyline points="12 5 19 12 12 19"></polyline>
                                     </svg>
                                 </button>
+                                <div
+                                    v-show="landingSearch.state.open"
+                                    class="search-results"
+                                >
+                                    <ul id="landing-results" role="listbox" aria-label="Search results">
+                                        <li
+                                            v-for="(result, index) in landingSearch.state.results"
+                                            :key="result.id"
+                                            :id="'landing-result-' + index"
+                                            class="search-result"
+                                            :class="{ active: index === landingSearch.state.active }"
+                                            role="option"
+                                            :aria-selected="index === landingSearch.state.active ? 'true' : 'false'"
+                                            @mouseenter="landingSearch.state.active = index"
+                                            @mousedown.prevent="landingSearch.select(result)"
+                                        >
+                                            <span class="search-result-name">{{ result.name }}</span>
+                                            <span class="search-result-context">{{ result.context }}</span>
+                                            <span class="search-result-kind">{{ result.kind }}</span>
+                                        </li>
+                                    </ul>
+                                    <div class="search-results-foot">
+                                        <span>↑ ↓ to navigate · Enter to choose</span>
+                                        <span>© OpenStreetMap</span>
+                                    </div>
+                                </div>
                             </div>
+                            <p
+                                v-if="landingSearch.state.error"
+                                class="landing-search-error"
+                                role="alert"
+                            >
+                                {{ landingSearch.state.error }}
+                            </p>
                             <div class="landing-cities">
-                                <button
-                                    class="landing-city-pill"
-                                    @click="quickCity('Paris')"
-                                >
-                                    Paris
-                                </button>
-                                <button
-                                    class="landing-city-pill"
-                                    @click="quickCity('Tokyo')"
-                                >
-                                    Tokyo
-                                </button>
-                                <button
-                                    class="landing-city-pill"
-                                    @click="quickCity('New York')"
-                                >
-                                    New York
-                                </button>
-                                <button
-                                    class="landing-city-pill"
-                                    @click="quickCity('London')"
-                                >
-                                    London
-                                </button>
+                                <button class="landing-city-pill" @click="quickCity('Paris')">Paris</button>
+                                <button class="landing-city-pill" @click="quickCity('Tokyo')">Tokyo</button>
+                                <button class="landing-city-pill" @click="quickCity('New York')">New York</button>
+                                <button class="landing-city-pill" @click="quickCity('London')">London</button>
                                 <button
                                     class="landing-city-pill landing-city-pill--accent"
                                     @click="quickCity('random')"
@@ -175,6 +251,7 @@
                                         stroke-width="2"
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
+                                        aria-hidden="true"
                                     >
                                         <path d="M16 3h5v5"></path>
                                         <path d="M4 20L21 3"></path>
@@ -197,17 +274,24 @@
                             >{{ city }}, {{ country }}</span
                         >
                     </div>
+
+                    <p class="map-attribution map-attribution--landing">
+                        <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>
+                        · <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">© OpenMapTiles</a>
+                        · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>
+                    </p>
                 </div>
 
                 <!-- ============================================================
                  EDITOR VIEW — Floating Toolbar + Panels
                  ============================================================ -->
-                <div v-if="viewMode === 'editor'" style="display: contents">
+                <div v-if="viewMode === 'editor'" class="editor-root">
                     <!-- Floating top-left: Back button -->
                     <button
                         class="editor-fab editor-fab--back"
                         @click="backToLanding"
                         title="Back to search"
+                        aria-label="Back to search"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -219,6 +303,7 @@
                             stroke-width="2"
                             stroke-linecap="round"
                             stroke-linejoin="round"
+                            aria-hidden="true"
                         >
                             <line x1="19" y1="12" x2="5" y2="12"></line>
                             <polyline points="12 19 5 12 12 5"></polyline>
@@ -230,6 +315,7 @@
                         class="editor-fab editor-fab--theme"
                         @click="toggleTheme"
                         :title="theme === 'dark' ? 'Light mode' : 'Dark mode'"
+                        :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
                     >
                         <svg
                             v-if="theme === 'dark'"
@@ -242,36 +328,10 @@
                             stroke-width="2"
                             stroke-linecap="round"
                             stroke-linejoin="round"
+                            aria-hidden="true"
                         >
                             <circle cx="12" cy="12" r="5"></circle>
-                            <line x1="12" y1="1" x2="12" y2="3"></line>
-                            <line x1="12" y1="21" x2="12" y2="23"></line>
-                            <line
-                                x1="4.22"
-                                y1="4.22"
-                                x2="5.64"
-                                y2="5.64"
-                            ></line>
-                            <line
-                                x1="18.36"
-                                y1="18.36"
-                                x2="19.78"
-                                y2="19.78"
-                            ></line>
-                            <line x1="1" y1="12" x2="3" y2="12"></line>
-                            <line x1="21" y1="12" x2="23" y2="12"></line>
-                            <line
-                                x1="4.22"
-                                y1="19.78"
-                                x2="5.64"
-                                y2="18.36"
-                            ></line>
-                            <line
-                                x1="18.36"
-                                y1="5.64"
-                                x2="19.78"
-                                y2="4.22"
-                            ></line>
+                            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
                         </svg>
                         <svg
                             v-else
@@ -284,24 +344,79 @@
                             stroke-width="2"
                             stroke-linecap="round"
                             stroke-linejoin="round"
+                            aria-hidden="true"
                         >
-                            <path
-                                d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
-                            ></path>
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                         </svg>
                     </button>
 
                     <!-- Floating top-center: Search -->
                     <div class="editor-search-bar">
-                        <input
-                            v-model="searchQuery"
-                            @input="searchLocation"
-                            type="text"
-                            class="editor-search-input"
-                            placeholder="Search city..."
-                        />
-                        <p v-if="searchError" class="editor-search-error">
-                            {{ searchError }}
+                        <div class="editor-search-field">
+                            <input
+                                v-model="editorSearch.state.query"
+                                @input="editorSearch.onInput"
+                                @keydown="editorSearch.onKeydown"
+                                type="search"
+                                class="editor-search-input"
+                                placeholder="Search a place…"
+                                aria-label="Search a place"
+                                role="combobox"
+                                aria-autocomplete="list"
+                                :aria-expanded="editorSearch.state.open ? 'true' : 'false'"
+                                aria-controls="editor-results"
+                                :aria-activedescendant="editorSearch.state.open && editorSearch.state.active >= 0 ? 'editor-result-' + editorSearch.state.active : null"
+                                autocomplete="off"
+                            />
+                            <span
+                                v-if="editorSearch.state.loading"
+                                class="search-spinner search-spinner--field"
+                                role="status"
+                                aria-label="Searching"
+                            ></span>
+                            <button
+                                v-else-if="editorSearch.state.query"
+                                type="button"
+                                class="search-clear"
+                                aria-label="Clear search"
+                                @click="editorSearch.clear"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div v-show="editorSearch.state.open" class="search-results">
+                            <ul id="editor-results" role="listbox" aria-label="Search results">
+                                <li
+                                    v-for="(result, index) in editorSearch.state.results"
+                                    :key="result.id"
+                                    :id="'editor-result-' + index"
+                                    class="search-result"
+                                    :class="{ active: index === editorSearch.state.active }"
+                                    role="option"
+                                    :aria-selected="index === editorSearch.state.active ? 'true' : 'false'"
+                                    @mouseenter="editorSearch.state.active = index"
+                                    @mousedown.prevent="editorSearch.select(result)"
+                                >
+                                    <span class="search-result-name">{{ result.name }}</span>
+                                    <span class="search-result-context">{{ result.context }}</span>
+                                    <span class="search-result-kind">{{ result.kind }}</span>
+                                </li>
+                            </ul>
+                            <label class="checkbox-label search-results-option">
+                                <input type="checkbox" v-model="updateLabelsOnSearch" class="form-checkbox" />
+                                <span>{{ updateLabelsText }}</span>
+                            </label>
+                            <div class="search-results-foot">
+                                <span>↑ ↓ to navigate · Enter to choose</span>
+                                <span>© OpenStreetMap</span>
+                            </div>
+                        </div>
+                        <p
+                            v-if="editorSearch.state.error"
+                            class="editor-search-error"
+                            role="alert"
+                        >
+                            {{ editorSearch.state.error }}
                         </p>
                     </div>
 
@@ -309,8 +424,11 @@
 
                     <!-- Panel: Style -->
                     <div
+                        id="panel-style"
                         class="floating-panel"
                         :class="{ active: activePanel === 'style' }"
+                        role="region"
+                        aria-label="Style"
                     >
                         <div class="floating-panel-inner">
                             <div class="fp-section-title">Style</div>
@@ -318,83 +436,66 @@
                                 <button
                                     v-for="style in styleOptions"
                                     :key="style.value"
+                                    type="button"
                                     class="style-option"
                                     :class="{ active: posterStyle === style.value }"
+                                    :aria-pressed="posterStyle === style.value ? 'true' : 'false'"
                                     @click="setPosterStyle(style.value)"
-                                    :data-name="style.name"
                                 >
-                                    <div
-                                        class="style-preview"
-                                        :class="style.value"
-                                    ></div>
+                                    <span class="style-thumb" v-html="styleThumbnails[style.value]"></span>
+                                    <span class="style-name">{{ style.name }}</span>
                                 </button>
                             </div>
+                            <p class="form-hint">Tip: use ← and → to browse styles.</p>
 
-                            <div
-                                class="fp-section-title"
-                                style="margin-top: 0.75rem"
-                            >
-                                Orientation
-                            </div>
+                            <div class="fp-section-title">Orientation</div>
                             <div class="orientation-toggle">
                                 <button
+                                    type="button"
                                     class="orientation-btn"
                                     :class="{ active: orientation === 'portrait' }"
+                                    :aria-pressed="orientation === 'portrait' ? 'true' : 'false'"
                                     @click="setOrientation('portrait')"
                                 >
-                                    <span class="orientation-icon"></span>
+                                    <span class="orientation-icon" aria-hidden="true"></span>
                                     Portrait
                                 </button>
                                 <button
+                                    type="button"
                                     class="orientation-btn"
                                     :class="{ active: orientation === 'landscape' }"
+                                    :aria-pressed="orientation === 'landscape' ? 'true' : 'false'"
                                     @click="setOrientation('landscape')"
                                 >
-                                    <span
-                                        class="orientation-icon landscape"
-                                    ></span>
+                                    <span class="orientation-icon landscape" aria-hidden="true"></span>
                                     Landscape
                                 </button>
                             </div>
 
-                            <div
-                                class="fp-section-title"
-                                style="margin-top: 0.75rem"
-                            >
-                                Border
-                            </div>
-                            <div class="font-picker-pill" style="width: 100%">
+                            <label class="fp-section-title" for="border-style">Border</label>
+                            <div class="font-picker-pill font-picker-pill--wide">
                                 <select
+                                    id="border-style"
                                     v-model="borderStyle"
                                     class="form-select form-select-mini"
-                                    style="width: 100%"
                                 >
-                                    <option
-                                        v-for="style in borderOptions"
-                                        :value="style.value"
-                                    >
+                                    <option v-for="style in borderOptions" :value="style.value">
                                         {{ style.name }}
                                     </option>
                                 </select>
                             </div>
 
-                            <div
-                                class="fp-section-title"
-                                style="margin-top: 0.75rem"
-                            >
-                                Map Shape
-                            </div>
+                            <div class="fp-section-title">Map Shape</div>
                             <div class="shape-grid">
                                 <button
                                     v-for="shape in mapShapeOptions"
+                                    type="button"
                                     class="shape-option"
                                     :class="{ active: mapShape === shape.value }"
+                                    :aria-pressed="mapShape === shape.value ? 'true' : 'false'"
                                     @click="mapShape = shape.value"
                                 >
-                                    <div
-                                        class="shape-icon"
-                                        :class="'shape-icon--' + shape.value"
-                                    ></div>
+                                    <div class="shape-icon" :class="'shape-icon--' + shape.value" aria-hidden="true"></div>
                                     <span>{{ shape.name }}</span>
                                 </button>
                             </div>
@@ -403,13 +504,17 @@
 
                     <!-- Panel: Map -->
                     <div
+                        id="panel-map"
                         class="floating-panel"
                         :class="{ active: activePanel === 'map' }"
+                        role="region"
+                        aria-label="Map"
                     >
                         <div class="floating-panel-inner">
-                            <div class="fp-section-title">Road Width</div>
+                            <label class="fp-section-title" for="road-width">Road Width</label>
                             <div class="range-container">
                                 <input
+                                    id="road-width"
                                     type="range"
                                     v-model.number="roadWidthScale"
                                     min="0.5"
@@ -417,440 +522,301 @@
                                     step="0.1"
                                     class="form-range"
                                 />
-                                <span class="range-value"
-                                    >{{ roadWidthScale }}x</span
-                                >
+                                <span class="range-value">{{ roadWidthScale.toFixed(1) }}×</span>
                             </div>
 
-                            <div class="form-group" style="margin-top: 0.5rem">
-                                <div
-                                    style="
-                                        display: flex;
-                                        justify-content: space-between;
-                                        align-items: center;
-                                        width: 100%;
-                                    "
-                                >
-                                    <label class="checkbox-label">
-                                        <input
-                                            type="checkbox"
-                                            v-model="showBuildings"
-                                            class="form-checkbox"
-                                        />
-                                        <span>Buildings</span>
-                                    </label>
-                                    <input
-                                        v-model="buildingColor"
-                                        type="color"
-                                        class="color-picker"
-                                    />
-                                </div>
-                            </div>
+                            <label class="checkbox-label">
+                                <input type="checkbox" v-model="showBuildings" class="form-checkbox" />
+                                <span>Show buildings</span>
+                            </label>
 
-                            <div
-                                class="fp-section-title"
-                                style="margin-top: 0.75rem"
-                            >
-                                Colors
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Water</label>
-                                    <div class="color-picker-container">
-                                        <input
-                                            v-model="customWaterColor"
-                                            type="color"
-                                            class="color-picker"
-                                        />
-                                        <input
-                                            v-model="customWaterColor"
-                                            type="text"
-                                            class="form-input"
-                                            style="flex: 1"
-                                        />
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Land</label>
-                                    <div class="color-picker-container">
-                                        <input
-                                            v-model="customLandColor"
-                                            type="color"
-                                            class="color-picker"
-                                        />
-                                        <input
-                                            v-model="customLandColor"
-                                            type="text"
-                                            class="form-input"
-                                            style="flex: 1"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Roads</label>
-                                    <div class="color-picker-container">
-                                        <input
-                                            v-model="customRoadColor"
-                                            type="color"
-                                            class="color-picker"
-                                        />
-                                        <input
-                                            v-model="customRoadColor"
-                                            type="text"
-                                            class="form-input"
-                                            style="flex: 1"
-                                        />
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Parks</label>
-                                    <div class="color-picker-container">
-                                        <input
-                                            v-model="customParkColor"
-                                            type="color"
-                                            class="color-picker"
-                                        />
-                                        <input
-                                            v-model="customParkColor"
-                                            type="text"
-                                            class="form-input"
-                                            style="flex: 1"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                            <div class="fp-section-title">Colors</div>
+                            <color-palette
+                                id-prefix="map-color"
+                                group-label="Map colors"
+                                :items="mapPalette"
+                                :swatches="swatches"
+                                @change="setColor"
+                            ></color-palette>
+
                             <button
-                                class="btn btn-secondary btn-sm"
+                                type="button"
+                                class="btn btn-secondary btn-sm btn-block"
                                 @click="resetMapColors"
-                                style="
-                                    justify-content: center;
-                                    margin-top: 5px;
-                                    width: 100%;
-                                "
+                                :disabled="!panelModified.map"
                             >
-                                Reset to Theme Defaults
+                                Reset map to theme defaults
                             </button>
                         </div>
                     </div>
 
                     <!-- Panel: Labels -->
                     <div
+                        id="panel-labels"
                         class="floating-panel"
                         :class="{ active: activePanel === 'labels' }"
+                        role="region"
+                        aria-label="Labels"
                     >
                         <div class="floating-panel-inner">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label">City</label>
-                                    <input
-                                        v-model="city"
-                                        type="text"
-                                        class="form-input"
-                                    />
-                                    <div
-                                        class="font-picker-pill"
-                                        style="margin-top: 5px"
-                                    >
+                                    <label class="form-label" for="label-city">City</label>
+                                    <input id="label-city" v-model="city" type="text" class="form-input" />
+                                    <div class="font-picker-pill font-picker-pill--wide">
                                         <select
                                             v-model="cityFont"
                                             class="form-select form-select-mini"
-                                            style="width: 100%"
                                             :style="{ fontFamily: cityFont }"
+                                            aria-label="City font"
                                         >
-                                            <option
-                                                v-for="font in fontOptions"
-                                                :value="font.value"
-                                                :style="{ fontFamily: font.value }"
-                                            >
+                                            <option v-for="font in fontOptions" :value="font.value" :style="{ fontFamily: font.value }">
                                                 {{ font.name }}
                                             </option>
                                         </select>
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Country</label>
-                                    <input
-                                        v-model="country"
-                                        type="text"
-                                        class="form-input"
-                                    />
-                                    <div
-                                        class="font-picker-pill"
-                                        style="margin-top: 5px"
-                                    >
+                                    <label class="form-label" for="label-country">Country</label>
+                                    <input id="label-country" v-model="country" type="text" class="form-input" />
+                                    <div class="font-picker-pill font-picker-pill--wide">
                                         <select
                                             v-model="countryFont"
                                             class="form-select form-select-mini"
-                                            style="width: 100%"
                                             :style="{ fontFamily: countryFont }"
+                                            aria-label="Country font"
                                         >
-                                            <option
-                                                v-for="font in fontOptions"
-                                                :value="font.value"
-                                                :style="{ fontFamily: font.value }"
-                                            >
+                                            <option v-for="font in fontOptions" :value="font.value" :style="{ fontFamily: font.value }">
                                                 {{ font.name }}
                                             </option>
                                         </select>
                                     </div>
                                 </div>
                             </div>
-
-                            <div
-                                class="fp-section-title"
-                                style="margin-top: 0.5rem"
-                            >
-                                Placement
+                            <div class="form-group">
+                                <label class="form-label" for="coords-font">Coordinates font</label>
+                                <div class="font-picker-pill font-picker-pill--wide">
+                                    <select
+                                        id="coords-font"
+                                        v-model="coordsFont"
+                                        class="form-select form-select-mini"
+                                        :style="{ fontFamily: coordsFont }"
+                                    >
+                                        <option v-for="font in fontOptions" :value="font.value" :style="{ fontFamily: font.value }">
+                                            {{ font.name }}
+                                        </option>
+                                    </select>
+                                </div>
                             </div>
+
+                            <div class="fp-section-title">Placement</div>
                             <div class="orientation-toggle">
                                 <button
                                     v-for="placement in labelPlacementOptions"
+                                    type="button"
                                     class="orientation-btn"
                                     :class="{ active: labelPlacement === placement.value }"
+                                    :aria-pressed="labelPlacement === placement.value ? 'true' : 'false'"
                                     @click="labelPlacement = placement.value"
                                 >
                                     {{ placement.name }}
                                 </button>
                             </div>
 
-                            <div
-                                class="fp-section-title"
-                                style="margin-top: 0.5rem"
-                            >
-                                Visibility
-                            </div>
+                            <div class="fp-section-title">Visibility</div>
                             <div class="orientation-toggle">
+                                <button type="button" class="orientation-btn" :class="{ active: showCity }" :aria-pressed="showCity ? 'true' : 'false'" @click="showCity = !showCity">City</button>
+                                <button type="button" class="orientation-btn" :class="{ active: showCountry }" :aria-pressed="showCountry ? 'true' : 'false'" @click="showCountry = !showCountry">Country</button>
+                                <button type="button" class="orientation-btn" :class="{ active: showCoords }" :aria-pressed="showCoords ? 'true' : 'false'" @click="showCoords = !showCoords">Coords</button>
                                 <button
+                                    type="button"
                                     class="orientation-btn"
-                                    :class="{ active: showCity }"
-                                    @click="showCity = !showCity"
+                                    :class="{ active: showAttribution }"
+                                    :aria-pressed="showAttribution ? 'true' : 'false'"
+                                    title="OpenStreetMap credit in the poster margin"
+                                    @click="showAttribution = !showAttribution"
                                 >
-                                    City
-                                </button>
-                                <button
-                                    class="orientation-btn"
-                                    :class="{ active: showCountry }"
-                                    @click="showCountry = !showCountry"
-                                >
-                                    Country
-                                </button>
-                                <button
-                                    class="orientation-btn"
-                                    :class="{ active: showCoords }"
-                                    @click="showCoords = !showCoords"
-                                >
-                                    Coords
+                                    © OSM
                                 </button>
                             </div>
 
-                            <div
-                                class="fp-section-title"
-                                style="margin-top: 0.5rem"
-                            >
-                                Gradient Fade
-                            </div>
+                            <div class="fp-section-title">Gradient Fade</div>
                             <div class="orientation-toggle">
-                                <button
-                                    class="orientation-btn"
-                                    :class="{ active: showFade }"
-                                    @click="showFade = !showFade; applyColors()"
-                                >
+                                <button type="button" class="orientation-btn" :class="{ active: showFade }" :aria-pressed="showFade ? 'true' : 'false'" @click="showFade = !showFade">
                                     Show Fade
                                 </button>
                             </div>
-                            <div
-                                class="range-container"
-                                v-if="showFade"
-                                style="margin-top: 0.25rem"
-                            >
-                                <span
-                                    class="range-value"
-                                    style="min-width: 35px; font-size: 0.75rem"
-                                    >Fade</span
-                                >
+                            <div class="range-container" v-if="showFade">
+                                <label class="range-label" for="fade-intensity">Fade</label>
                                 <input
+                                    id="fade-intensity"
                                     type="range"
                                     v-model.number="fadeIntensity"
-                                    @input="applyColors"
                                     min="0"
                                     max="100"
                                     step="5"
                                     class="form-range"
                                 />
-                                <span class="range-value"
-                                    >{{ fadeIntensity }}%</span
-                                >
+                                <span class="range-value">{{ fadeIntensity }}%</span>
                             </div>
                             <div class="range-container" v-if="showFade">
-                                <span
-                                    class="range-value"
-                                    style="min-width: 35px; font-size: 0.75rem"
-                                    >Solid</span
-                                >
+                                <label class="range-label" for="fade-solid">Solid</label>
                                 <input
+                                    id="fade-solid"
                                     type="range"
                                     v-model.number="solidBlockHeight"
-                                    @input="applyColors"
                                     min="0"
                                     max="50"
                                     step="5"
                                     class="form-range"
                                 />
-                                <span class="range-value"
-                                    >{{ solidBlockHeight }}%</span
-                                >
+                                <span class="range-value">{{ solidBlockHeight }}%</span>
                             </div>
 
-                            <div
-                                class="fp-section-title"
-                                style="margin-top: 0.5rem"
-                            >
-                                Poster Colors
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Border</label>
-                                    <div class="color-picker-container">
-                                        <input
-                                            v-model="borderColor"
-                                            type="color"
-                                            class="color-picker"
-                                        />
-                                        <input
-                                            v-model="borderColor"
-                                            type="text"
-                                            class="form-input"
-                                            style="flex: 1"
-                                        />
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Text</label>
-                                    <div class="color-picker-container">
-                                        <input
-                                            v-model="textColor"
-                                            type="color"
-                                            class="color-picker"
-                                        />
-                                        <input
-                                            v-model="textColor"
-                                            type="text"
-                                            class="form-input"
-                                            style="flex: 1"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Background</label>
-                                <div class="color-picker-container">
-                                    <input
-                                        v-model="bgColor"
-                                        type="color"
-                                        class="color-picker"
-                                    />
-                                    <input
-                                        v-model="bgColor"
-                                        type="text"
-                                        class="form-input"
-                                        style="flex: 1"
-                                    />
-                                </div>
-                            </div>
+                            <div class="fp-section-title">Poster Colors</div>
+                            <color-palette
+                                id-prefix="poster-color"
+                                group-label="Poster colors"
+                                :items="posterPalette"
+                                :swatches="swatches"
+                                @change="setColor"
+                            ></color-palette>
                         </div>
                     </div>
 
                     <!-- Panel: Position -->
                     <div
+                        id="panel-position"
                         class="floating-panel"
                         :class="{ active: activePanel === 'position' }"
+                        role="region"
+                        aria-label="Position"
                     >
                         <div class="floating-panel-inner">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label">Latitude</label>
+                                    <label class="form-label" for="pos-lat">Latitude</label>
                                     <input
-                                        v-model.number="lat"
-                                        type="number"
-                                        step="0.0001"
-                                        class="form-input"
-                                        @change="updateMapPosition"
+                                        id="pos-lat"
+                                        v-model="coordsInput.lat"
+                                        type="text"
+                                        inputmode="decimal"
+                                        class="form-input form-input--mono"
+                                        :class="{ invalid: coordsInput.error }"
+                                        @change="applyCoords"
+                                        @keydown.enter="applyCoords"
                                     />
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Longitude</label>
+                                    <label class="form-label" for="pos-lng">Longitude</label>
                                     <input
-                                        v-model.number="lng"
-                                        type="number"
-                                        step="0.0001"
-                                        class="form-input"
-                                        @change="updateMapPosition"
+                                        id="pos-lng"
+                                        v-model="coordsInput.lng"
+                                        type="text"
+                                        inputmode="decimal"
+                                        class="form-input form-input--mono"
+                                        :class="{ invalid: coordsInput.error }"
+                                        @change="applyCoords"
+                                        @keydown.enter="applyCoords"
                                     />
                                 </div>
                             </div>
-                            <div class="form-group" style="margin-top: 0.5rem">
-                                <label class="form-label"
-                                    >Zoom: {{ zoom }}</label
-                                >
+                            <p v-if="coordsInput.error" class="form-error" role="alert">{{ coordsInput.error }}</p>
+                            <div class="form-group">
+                                <div class="form-label-row">
+                                    <label class="form-label" for="pos-zoom">Zoom</label>
+                                    <span class="range-value">{{ zoomDisplay }}</span>
+                                </div>
                                 <input
+                                    id="pos-zoom"
                                     v-model.number="zoom"
                                     type="range"
-                                    min="10"
-                                    max="18"
-                                    step="0.2"
+                                    :min="MIN_ZOOM"
+                                    :max="MAX_ZOOM"
+                                    step="0.1"
                                     class="form-range"
                                 />
+                                <div class="range-ticks" aria-hidden="true">
+                                    <span>Region</span><span>City</span><span>District</span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Panel: Export -->
+                    <div
+                        id="panel-export"
+                        class="floating-panel"
+                        :class="{ active: activePanel === 'export' }"
+                        role="region"
+                        aria-label="Export"
+                    >
+                        <div class="floating-panel-inner">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="fp-section-title" for="export-format">Paper size</label>
+                                    <div class="font-picker-pill font-picker-pill--wide">
+                                        <select id="export-format" v-model="exportFormat" class="form-select form-select-mini">
+                                            <option v-for="format in exportFormats" :value="format">{{ format }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="fp-section-title">Resolution</div>
+                                    <div class="orientation-toggle">
+                                        <button
+                                            v-for="dpi in exportDpis"
+                                            type="button"
+                                            class="orientation-btn"
+                                            :class="{ active: exportDpi === dpi }"
+                                            :aria-pressed="exportDpi === dpi ? 'true' : 'false'"
+                                            @click="exportDpi = dpi"
+                                        >
+                                            {{ dpi }} dpi
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="export-summary">
+                                {{ exportFormat }} · {{ orientation }} · {{ exportInfo.width }} × {{ exportInfo.height }} px · {{ exportInfo.dpi }} dpi PNG
+                            </p>
+                            <p v-if="exportInfo.limited" class="form-hint">
+                                Lowered to {{ exportInfo.dpi }} dpi: this device cannot hold a larger image.
+                            </p>
+                            <button type="button" class="btn btn-primary btn-block" @click="downloadPoster" :disabled="exportState.open">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Download PNG
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- ===== Floating Toolbar ===== -->
-                    <nav class="editor-toolbar">
+                    <nav class="editor-toolbar" aria-label="Editor tools">
                         <button
                             class="toolbar-btn"
-                            :class="{ active: activePanel === 'style' }"
+                            :class="{ active: activePanel === 'style', modified: panelModified.style }"
                             @click="togglePanel('style')"
-                            title="Style"
+                            :aria-expanded="activePanel === 'style' ? 'true' : 'false'"
+                            aria-controls="panel-style"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                                ></path>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
                             </svg>
                             <span>Style</span>
                         </button>
                         <button
                             class="toolbar-btn"
-                            :class="{ active: activePanel === 'map' }"
+                            :class="{ active: activePanel === 'map', modified: panelModified.map }"
                             @click="togglePanel('map')"
-                            title="Map"
+                            :aria-expanded="activePanel === 'map' ? 'true' : 'false'"
+                            aria-controls="panel-map"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <polygon
-                                    points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"
-                                ></polygon>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
                                 <line x1="8" y1="2" x2="8" y2="18"></line>
                                 <line x1="16" y1="6" x2="16" y2="22"></line>
                             </svg>
@@ -858,21 +824,12 @@
                         </button>
                         <button
                             class="toolbar-btn"
-                            :class="{ active: activePanel === 'labels' }"
+                            :class="{ active: activePanel === 'labels', modified: panelModified.labels }"
                             @click="togglePanel('labels')"
-                            title="Labels"
+                            :aria-expanded="activePanel === 'labels' ? 'true' : 'false'"
+                            aria-controls="panel-labels"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <polyline points="4 7 4 4 20 4 20 7"></polyline>
                                 <line x1="9" y1="20" x2="15" y2="20"></line>
                                 <line x1="12" y1="4" x2="12" y2="20"></line>
@@ -883,50 +840,29 @@
                             class="toolbar-btn"
                             :class="{ active: activePanel === 'position' }"
                             @click="togglePanel('position')"
-                            title="Position"
+                            :aria-expanded="activePanel === 'position' ? 'true' : 'false'"
+                            aria-controls="panel-position"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <circle cx="12" cy="12" r="3"></circle>
-                                <path
-                                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
-                                ></path>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
                             </svg>
                             <span>Position</span>
                         </button>
                         <button
                             class="toolbar-btn toolbar-btn--download"
-                            @click="downloadPoster"
-                            :disabled="isLoading"
-                            title="Download"
+                            :class="{ active: activePanel === 'export' }"
+                            @click="togglePanel('export')"
+                            :disabled="exportState.open"
+                            :aria-expanded="activePanel === 'export' ? 'true' : 'false'"
+                            aria-controls="panel-export"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path
-                                    d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
-                                ></path>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                 <polyline points="7 10 12 15 17 10"></polyline>
                                 <line x1="12" y1="15" x2="12" y2="3"></line>
                             </svg>
-                            <span>{{ isLoading ? '...' : 'Export' }}</span>
+                            <span>Export</span>
                         </button>
                     </nav>
 
@@ -945,45 +881,21 @@
                                 class="style-switcher__btn"
                                 @click="cyclePosterStyle(-1)"
                                 title="Previous style (←)"
+                                aria-label="Previous style"
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                >
-                                    <polyline
-                                        points="15 18 9 12 15 6"
-                                    ></polyline>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
                                 </svg>
                             </button>
-                            <span class="style-switcher__label"
-                                >{{ posterStyle }}</span
-                            >
+                            <span class="style-switcher__label" aria-live="polite">{{ posterStyle }}</span>
                             <button
                                 class="style-switcher__btn"
                                 @click="cyclePosterStyle(1)"
                                 title="Next style (→)"
+                                aria-label="Next style"
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                >
-                                    <polyline
-                                        points="9 18 15 12 9 6"
-                                    ></polyline>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
                                 </svg>
                             </button>
                         </div>
@@ -992,28 +904,28 @@
                             <div
                                 id="poster-render"
                                 class="poster"
+                                role="img"
+                                :aria-label="'Poster preview: ' + displayCity"
                                 :class="[
-          orientation === 'landscape' ? 'landscape' : '',
-          posterStyle !== 'classic' ? 'style-' + posterStyle : '',
-          'border-' + borderStyle,
-          mapShape !== 'none' ? 'map-shape-' + mapShape : '',
-          'labels-' + labelPlacement
-        ]"
+                                    orientation === 'landscape' ? 'landscape' : '',
+                                    posterStyle !== 'classic' ? 'style-' + posterStyle : '',
+                                    'border-' + borderStyle,
+                                    mapShape !== 'none' ? 'map-shape-' + mapShape : '',
+                                    'labels-' + labelPlacement
+                                ]"
                             >
                                 <div class="poster-frame">
-                                    <div
-                                        class="map-loading-overlay"
-                                        :class="{ active: isMapLoading }"
-                                    >
+                                    <div class="map-loading-overlay" :class="{ active: isMapLoading }">
                                         <div class="map-loading-bar"></div>
                                     </div>
                                     <div class="map-drag-hint">
-                                        <span>✥ Drag to reposition</span>
+                                        <span>✥ Drag to reposition · scroll to zoom</span>
                                     </div>
                                     <!-- Map shape mask -->
                                     <div
                                         class="map-shape-container"
                                         :class="mapShape !== 'none' ? 'shape-' + mapShape : ''"
+                                        :style="mapShapeStyle"
                                     >
                                         <div id="map"></div>
                                     </div>
@@ -1022,59 +934,21 @@
                                         class="poster-text poster-text--top"
                                         v-if="labelPlacement === 'top' || labelPlacement === 'split'"
                                     >
-                                        <template
-                                            v-if="labelPlacement === 'top'"
+                                        <div class="poster-city" v-if="showCity" :style="{ fontFamily: cityFont }">
+                                            {{ displayCity }}
+                                        </div>
+                                        <div class="poster-country" v-if="showCountry && displayCountry" :style="{ fontFamily: countryFont }">
+                                            <span class="poster-divider"></span>
+                                            {{ displayCountry }}
+                                            <span class="poster-divider"></span>
+                                        </div>
+                                        <div
+                                            class="poster-coords"
+                                            v-if="labelPlacement === 'top' && showCoords && displayCoords"
+                                            :style="{ fontFamily: coordsFont }"
                                         >
-                                            <div
-                                                class="poster-city"
-                                                v-if="showCity"
-                                                :style="{ fontFamily: cityFont }"
-                                            >
-                                                {{ displayCity }}
-                                            </div>
-                                            <div
-                                                class="poster-country"
-                                                v-if="showCountry && displayCountry"
-                                                :style="{ fontFamily: countryFont }"
-                                            >
-                                                <span
-                                                    class="poster-divider"
-                                                ></span>
-                                                {{ displayCountry }}
-                                                <span
-                                                    class="poster-divider"
-                                                ></span>
-                                            </div>
-                                            <div
-                                                class="poster-coords"
-                                                v-if="showCoords && displayCoords"
-                                                :style="{ fontFamily: coordsFont }"
-                                            >
-                                                {{ displayCoords }}
-                                            </div>
-                                        </template>
-                                        <template v-else>
-                                            <div
-                                                class="poster-city"
-                                                v-if="showCity"
-                                                :style="{ fontFamily: cityFont }"
-                                            >
-                                                {{ displayCity }}
-                                            </div>
-                                            <div
-                                                class="poster-country"
-                                                v-if="showCountry && displayCountry"
-                                                :style="{ fontFamily: countryFont }"
-                                            >
-                                                <span
-                                                    class="poster-divider"
-                                                ></span>
-                                                {{ displayCountry }}
-                                                <span
-                                                    class="poster-divider"
-                                                ></span>
-                                            </div>
-                                        </template>
+                                            {{ displayCoords }}
+                                        </div>
                                     </div>
                                     <!-- Bottom text (default + center + split coords) -->
                                     <div
@@ -1082,80 +956,34 @@
                                         :class="{ 'poster-text--center': labelPlacement === 'center' }"
                                         v-if="labelPlacement === 'bottom' || labelPlacement === 'center' || labelPlacement === 'split'"
                                     >
-                                        <template
-                                            v-if="labelPlacement === 'bottom' || labelPlacement === 'center'"
-                                        >
-                                            <template
-                                                v-if="orientation === 'portrait'"
-                                            >
-                                                <div
-                                                    class="poster-city"
-                                                    v-if="showCity"
-                                                    :style="{ fontFamily: cityFont }"
-                                                >
+                                        <template v-if="labelPlacement === 'bottom' || labelPlacement === 'center'">
+                                            <template v-if="orientation === 'portrait'">
+                                                <div class="poster-city" v-if="showCity" :style="{ fontFamily: cityFont }">
                                                     {{ displayCity }}
                                                 </div>
-                                                <div
-                                                    class="poster-country"
-                                                    v-if="showCountry && displayCountry"
-                                                    :style="{ fontFamily: countryFont }"
-                                                >
-                                                    <span
-                                                        class="poster-divider"
-                                                    ></span>
+                                                <div class="poster-country" v-if="showCountry && displayCountry" :style="{ fontFamily: countryFont }">
+                                                    <span class="poster-divider"></span>
                                                     {{ displayCountry }}
-                                                    <span
-                                                        class="poster-divider"
-                                                    ></span>
+                                                    <span class="poster-divider"></span>
                                                 </div>
-                                                <div
-                                                    class="poster-coords"
-                                                    v-if="showCoords && displayCoords"
-                                                    :style="{ fontFamily: coordsFont }"
-                                                >
+                                                <div class="poster-coords" v-if="showCoords && displayCoords" :style="{ fontFamily: coordsFont }">
                                                     {{ displayCoords }}
                                                 </div>
                                             </template>
                                             <template v-else>
-                                                <div
-                                                    class="poster-title-line"
-                                                    v-if="showCity || showCountry"
-                                                >
-                                                    <span
-                                                        class="poster-city-inline"
-                                                        v-if="showCity"
-                                                        :style="{ fontFamily: cityFont }"
-                                                        >{{ displayCity }}</span
-                                                    >
-                                                    <span
-                                                        class="poster-separator"
-                                                        v-if="showCity && showCountry && displayCountry"
-                                                        >—</span
-                                                    >
-                                                    <span
-                                                        class="poster-country-inline"
-                                                        v-if="showCountry && displayCountry"
-                                                        :style="{ fontFamily: countryFont }"
-                                                        >{{ displayCountry
-                                                        }}</span
-                                                    >
+                                                <div class="poster-title-line" v-if="showCity || showCountry">
+                                                    <span class="poster-city-inline" v-if="showCity" :style="{ fontFamily: cityFont }">{{ displayCity }}</span>
+                                                    <span class="poster-separator" v-if="showCity && showCountry && displayCountry">—</span>
+                                                    <span class="poster-country-inline" v-if="showCountry && displayCountry" :style="{ fontFamily: countryFont }">{{ displayCountry }}</span>
                                                 </div>
-                                                <div
-                                                    class="poster-coords"
-                                                    v-if="showCoords && displayCoords"
-                                                    :style="{ fontFamily: coordsFont }"
-                                                >
+                                                <div class="poster-coords" v-if="showCoords && displayCoords" :style="{ fontFamily: coordsFont }">
                                                     {{ displayCoords }}
                                                 </div>
                                             </template>
                                         </template>
                                         <template v-else>
                                             <!-- split: only coords at bottom -->
-                                            <div
-                                                class="poster-coords"
-                                                v-if="showCoords && displayCoords"
-                                                :style="{ fontFamily: coordsFont }"
-                                            >
+                                            <div class="poster-coords" v-if="showCoords && displayCoords" :style="{ fontFamily: coordsFont }">
                                                 {{ displayCoords }}
                                             </div>
                                         </template>
@@ -1166,10 +994,68 @@
                                         <div class="border-middle"></div>
                                         <div class="border-line-inner"></div>
                                     </div>
+                                    <div class="poster-attribution" v-if="showAttribution">
+                                        © OpenStreetMap contributors
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </main>
+
+                    <p class="map-attribution map-attribution--editor">
+                        <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>
+                        · <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">© OpenMapTiles</a>
+                        · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>
+                    </p>
+
+                    <!-- Export progress -->
+                    <div v-if="exportState.open" class="export-dialog-backdrop">
+                        <div
+                            class="export-dialog"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="export-dialog-title"
+                            @keydown.esc="cancelExport"
+                        >
+                            <div class="export-dialog-head">
+                                <div class="download-overlay-line"></div>
+                                <h2 id="export-dialog-title" class="download-overlay-text">Exporting poster</h2>
+                                <div class="download-overlay-line"></div>
+                            </div>
+                            <ol class="export-steps">
+                                <li :class="exportStepState('layout')">
+                                    <span class="export-step-icon" aria-hidden="true"></span>
+                                    Layout {{ exportState.width }} × {{ exportState.height }} px
+                                </li>
+                                <li :class="exportStepState('map')">
+                                    <span class="export-step-icon" aria-hidden="true"></span>
+                                    Rendering the map
+                                    <div v-if="exportState.step === 'map'" class="export-progress">
+                                        <div
+                                            class="export-progress-bar"
+                                            :class="{ indeterminate: tileProgress === null }"
+                                            role="progressbar"
+                                            aria-valuemin="0"
+                                            aria-valuemax="100"
+                                            :aria-valuenow="tileProgress === null ? null : tileProgress"
+                                        >
+                                            <span :style="{ width: tileProgress === null ? null : tileProgress + '%' }"></span>
+                                        </div>
+                                        <span class="form-hint">
+                                            {{ exportState.requested ? exportState.loaded + ' / ' + exportState.requested + ' tiles' : 'Tiles already loaded, drawing…' }}
+                                        </span>
+                                    </div>
+                                </li>
+                                <li :class="exportStepState('compose')">
+                                    <span class="export-step-icon" aria-hidden="true"></span>
+                                    Composing and encoding PNG at {{ exportState.dpi }} dpi
+                                </li>
+                            </ol>
+                            <button ref="cancelExportBtn" type="button" class="btn btn-secondary btn-sm" @click="cancelExport">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <!-- /editor -->
             </div>

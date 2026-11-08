@@ -1,0 +1,13 @@
+{
+  "name": "map2poster",
+  "private": true,
+  "description": "Client-side map poster generator built on OpenStreetMap data.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test",
+    "start": "python -m http.server 8000"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

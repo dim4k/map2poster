@@ -1,139 +1,184 @@
 // ============================================================================
-// UTILITIES
+// UTILITIES — pure helpers (browser global `AppUtils`, CommonJS for tests)
 // ============================================================================
+(function (root, factory) {
+    const api = factory();
+    if (typeof module === "object" && module.exports) module.exports = api;
+    else root.AppUtils = api;
+})(typeof self !== "undefined" ? self : globalThis, function () {
+    "use strict";
 
-window.AppUtils = {
-    debounce(fn, delay) {
-        let timeoutId = null;
-        return function (...args) {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => fn.apply(this, args), delay);
-        };
-    },
-
-    formatCoords(lat, lng) {
+    function formatCoords(lat, lng) {
         const latDirection = lat >= 0 ? "°N" : "°S";
         const lngDirection = lng >= 0 ? "°E" : "°W";
         return `${Math.abs(lat).toFixed(4)}${latDirection} ${Math.abs(lng).toFixed(4)}${lngDirection}`;
-    },
+    }
 
-    showToast(message, type = "info") {
-        const container = document.querySelector(".toast-container");
-        if (!container) return;
+    // Parses a decimal typed with a dot or a comma. Returns NaN when invalid.
+    function parseDecimal(value) {
+        if (typeof value === "number") return value;
+        if (typeof value !== "string") return NaN;
+        const cleaned = value.trim().replace(",", ".");
+        if (!/^[-+]?\d*\.?\d+$/.test(cleaned)) return NaN;
+        return parseFloat(cleaned);
+    }
 
-        const toast = document.createElement("div");
-        toast.className = `toast ${type}`;
-        toast.textContent = message;
-        container.appendChild(toast);
+    // ------------------------------------------------------------------ Colors
+    // Accepts "#rgb" / "#rrggbb", with or without "#", any case. Returns "#rrggbb" or null.
+    function normalizeHex(input) {
+        if (typeof input !== "string") return null;
+        let v = input.trim().toLowerCase();
+        if (!v) return null;
+        if (v[0] !== "#") v = "#" + v;
+        if (/^#[0-9a-f]{3}$/.test(v)) v = "#" + v.slice(1).split("").map((c) => c + c).join("");
+        return /^#[0-9a-f]{6}$/.test(v) ? v : null;
+    }
 
-        setTimeout(() => {
-            toast.style.opacity = "0";
-            toast.style.transform = "translateY(10px)";
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-    },
-
-    // Inject pHYs chunk for 300 DPI into PNG Blob
-    async setDpi(blob, dpi = 300) {
-        const arrayBuffer = await blob.arrayBuffer();
-        const data = new Uint8Array(arrayBuffer);
-
-        // PNG Signature: 89 50 4E 47 0D 0A 1A 0A
-        // IHDR chunk comes first. We need to insert pHYs after IHDR.
-
-        // Calculate PPU (Pixels Per Unit) for 300 DPI
-        // 1 inch = 0.0254 meters
-        // 300 pixels / 0.0254 meters = ~11811 pixels/meter
-        const ppu = Math.round(dpi / 0.0254);
-
-        // pHYs chunk structure:
-        // Length (4 bytes), Type (4 bytes: pHYs), PPU X (4 bytes), PPU Y (4 bytes), Unit (1 byte: 1 for meters), CRC (4 bytes)
-        // Total 9 bytes data + 12 bytes overhead = 21 bytes
-
-        const physChunk = new Uint8Array(21);
-        const view = new DataView(physChunk.buffer);
-
-        view.setUint32(0, 9); // Length of data
-        // Chunk Type: pHYs (112 72 89 115)
-        physChunk[4] = 112;
-        physChunk[5] = 72;
-        physChunk[6] = 89;
-        physChunk[7] = 115;
-
-        view.setUint32(8, ppu); // X axis
-        view.setUint32(12, ppu); // Y axis
-        physChunk[16] = 1; // Unit specifier: meter
-
-        // CRC Calculation (essential for valid PNG)
-        const crcTable = [];
-        for (let n = 0; n < 256; n++) {
-            let c = n;
-            for (let k = 0; k < 8; k++) {
-                if (c & 1) c = 0xedb88320 ^ (c >>> 1);
-                else c = c >>> 1;
-            }
-            crcTable[n] = c;
-        }
-
-        function crc32(buf, off, len) {
-            let c = 0xffffffff;
-            for (let i = 0; i < len; i++) {
-                c = crcTable[(c ^ buf[off + i]) & 0xff] ^ (c >>> 8);
-            }
-            return c ^ 0xffffffff;
-        }
-
-        const crc = crc32(physChunk, 4, 13); // Calculate CRC over Type + Data
-        view.setUint32(17, crc);
-
-        // Construct new blob
-        // Insert after IHDR (Length 4 + Type 4 + Data 13 + CRC 4 = 25 bytes + 8 signature = 33 bytes)
-        // But simpler to just search for the first chunk end (IHDR)
-
-        // IHDR length is always 13 bytes.
-        // Signature (8) + IHDR Len (4) + IHDR Type (4) + IHDR Data (13) + IHDR CRC (4) = 33 bytes.
-        // So safe to insert at index 33.
-
-        const finalData = new Uint8Array(data.length + 21);
-        finalData.set(data.subarray(0, 33), 0);
-        finalData.set(physChunk, 33);
-        finalData.set(data.subarray(33), 54);
-
-        return new Blob([finalData], { type: "image/png" });
-    },
-
-    hexToRgba(hex, alpha) {
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
+    function hexToRgba(hex, alpha) {
+        const h = normalizeHex(hex) || "#000000";
+        const r = parseInt(h.slice(1, 3), 16);
+        const g = parseInt(h.slice(3, 5), 16);
+        const b = parseInt(h.slice(5, 7), 16);
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    },
+    }
 
-    computeGradientStyle(
-        bgColor,
-        fadeIntensity,
-        solidBlockHeight,
-        baseHeight = 2520,
-    ) {
-        const sliderValue = fadeIntensity;
-        let elementHeight, gradientStart;
-
-        if (sliderValue <= 50) {
+    // Gradient behind the poster text. 0–50 moves the fade start up; 50–100 makes it taller.
+    // Uses the background colour at alpha 0 (not "transparent") so the fade does not turn grey.
+    function computeGradientStyle(bgColor, fadeIntensity, solidBlockHeight, baseHeight = 2520) {
+        const intensity = Math.min(100, Math.max(0, Number(fadeIntensity) || 0));
+        let elementHeight;
+        let gradientStart;
+        if (intensity <= 50) {
             elementHeight = baseHeight;
-            gradientStart = 100 - sliderValue * 2;
+            gradientStart = 100 - intensity * 2;
         } else {
-            const extraHeight = ((sliderValue - 50) / 50) * baseHeight;
-            elementHeight = baseHeight + extraHeight;
+            elementHeight = baseHeight + ((intensity - 50) / 50) * baseHeight;
             gradientStart = 0;
         }
-
-        const fadeEnd = 100 - solidBlockHeight;
-        const bgTransparent = AppUtils.hexToRgba(bgColor, 0);
-        const bgSolid = AppUtils.hexToRgba(bgColor, 1);
-
+        const fadeEnd = Math.max(gradientStart, 100 - (Number(solidBlockHeight) || 0));
+        const bgTransparent = hexToRgba(bgColor, 0);
+        const bgSolid = hexToRgba(bgColor, 1);
         return {
             height: `${elementHeight}px`,
             background: `linear-gradient(to bottom, ${bgTransparent} ${gradientStart}%, ${bgSolid} ${fadeEnd}%, ${bgSolid} 100%)`,
         };
-    },
-};
+    }
+
+    // Shrinks a line of text to fit `maxWidth`: tightens letter-spacing first (down to 40 %),
+    // then scales size and spacing together (down to `minRatio`).
+    // glyphWidth: width of the glyphs alone at `size`; gaps: number of letter-spacing gaps.
+    function fitText({ glyphWidth, gaps, size, spacing, maxWidth, minRatio = 0.4 }) {
+        const width = glyphWidth + spacing * gaps;
+        if (width <= maxWidth) return { size, spacing, ratio: 1 };
+        const minSpacing = spacing > 0 ? spacing * 0.4 : spacing;
+        if (gaps > 0 && spacing > 0) {
+            const needed = (maxWidth - glyphWidth) / gaps;
+            if (needed >= minSpacing) return { size, spacing: needed, ratio: 1 };
+        }
+        const tight = glyphWidth + minSpacing * gaps;
+        const ratio = Math.max(minRatio, Math.min(1, maxWidth / tight));
+        return { size: size * ratio, spacing: minSpacing * ratio, ratio };
+    }
+
+    // ------------------------------------------------------------------ PNG DPI
+    let crcTable = null;
+    function crc32(buf, off, len) {
+        if (!crcTable) {
+            crcTable = new Uint32Array(256);
+            for (let n = 0; n < 256; n++) {
+                let c = n;
+                for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+                crcTable[n] = c >>> 0;
+            }
+        }
+        let c = 0xffffffff;
+        for (let i = 0; i < len; i++) c = crcTable[(c ^ buf[off + i]) & 0xff] ^ (c >>> 8);
+        return (c ^ 0xffffffff) >>> 0;
+    }
+
+    const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
+
+    // Returns a copy of the PNG bytes with a pHYs chunk set to `dpi`.
+    // Replaces an existing pHYs chunk, otherwise inserts one right after IHDR.
+    function setPngDpi(bytes, dpi) {
+        const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+        for (let i = 0; i < 8; i++) {
+            if (data[i] !== PNG_SIGNATURE[i]) throw new Error("Not a PNG file");
+        }
+        const ppm = Math.round(dpi / 0.0254); // pixels per metre
+        const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+
+        let offset = 8;
+        while (offset + 12 <= data.length) {
+            const length = view.getUint32(offset);
+            const type = String.fromCharCode(data[offset + 4], data[offset + 5], data[offset + 6], data[offset + 7]);
+            if (type === "pHYs" && length === 9) {
+                const out = data.slice();
+                const outView = new DataView(out.buffer);
+                outView.setUint32(offset + 8, ppm);
+                outView.setUint32(offset + 12, ppm);
+                out[offset + 16] = 1;
+                outView.setUint32(offset + 17, crc32(out, offset + 4, 13));
+                return out;
+            }
+            if (type === "IDAT" || type === "IEND") break;
+            offset += 12 + length;
+        }
+
+        const chunk = new Uint8Array(21);
+        const chunkView = new DataView(chunk.buffer);
+        chunkView.setUint32(0, 9);
+        chunk.set([112, 72, 89, 115], 4); // "pHYs"
+        chunkView.setUint32(8, ppm);
+        chunkView.setUint32(12, ppm);
+        chunk[16] = 1; // unit: metre
+        chunkView.setUint32(17, crc32(chunk, 4, 13));
+
+        const ihdrEnd = 8 + 12 + view.getUint32(8);
+        const out = new Uint8Array(data.length + chunk.length);
+        out.set(data.subarray(0, ihdrEnd), 0);
+        out.set(chunk, ihdrEnd);
+        out.set(data.subarray(ihdrEnd), ihdrEnd + chunk.length);
+        return out;
+    }
+
+    async function setDpi(blob, dpi = 300) {
+        const bytes = new Uint8Array(await blob.arrayBuffer());
+        return new Blob([setPngDpi(bytes, dpi)], { type: "image/png" });
+    }
+
+    // ------------------------------------------------------------------ Files
+    function sanitizeFilename(value, fallback = "Map") {
+        const cleaned = String(value || "")
+            .normalize("NFC")
+            .replace(/[\\/:*?"<>|\u0000-\u001f]+/g, "-")
+            .replace(/\s+/g, "_")
+            .replace(/^[-_.]+|[-_.]+$/g, "");
+        return cleaned || fallback;
+    }
+
+    function formatBytes(bytes) {
+        const units = ["B", "KB", "MB", "GB"];
+        let value = bytes;
+        let unit = 0;
+        while (value >= 1024 && unit < units.length - 1) {
+            value /= 1024;
+            unit++;
+        }
+        return `${unit === 0 ? value : value.toFixed(1)} ${units[unit]}`;
+    }
+
+    return {
+        formatCoords,
+        parseDecimal,
+        normalizeHex,
+        hexToRgba,
+        computeGradientStyle,
+        fitText,
+        crc32,
+        setPngDpi,
+        setDpi,
+        sanitizeFilename,
+        formatBytes,
+    };
+});
